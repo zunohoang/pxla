@@ -1,0 +1,6 @@
+# Generated artifacts must not be treated as source text or line-normalized.
+*.pdf binary
+*.docx binary
+*.png binary
+*.npz binary
+*.zip binary
