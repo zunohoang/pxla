@@ -1,0 +1,28 @@
+{
+  "schema": "leaflab-severity-1",
+  "project": {
+    "name": "Quy ước diện tích của đồ án",
+    "thresholds": [0.01, 0.05, 0.20],
+    "labels": ["Chưa thấy vùng nghi tổn thương", "Nhẹ", "Trung bình", "Nặng"],
+    "calibrated": false
+  },
+  "irri": {
+    "status": "pending_primary_table_verification",
+    "source": "https://www.knowledgebank.irri.org/images/docs/rice-standard-evaluation-system.pdf",
+    "rules": {},
+    "note": "Chưa ánh xạ IRRI. Bảng phải được kiểm tra trực quan từ nguồn chính thức, theo đúng bệnh và giai đoạn sinh trưởng. Không dùng chung một thang 0–9 cho mọi bệnh hoặc cà phê."
+  },
+  "advice": {
+    "uncertain": "Chưa chắc loại bệnh. Chụp lại đủ sáng, bổ sung ảnh toàn cây và hỏi cán bộ khuyến nông trước khi xử lý.",
+    "low": "Đánh dấu lá, chụp đối chiếu sau vài ngày và theo dõi lá mới; chưa quyết định phun thuốc chỉ từ ảnh này.",
+    "high": "Khảo sát thêm nhiều cây trong ruộng/vườn và liên hệ cán bộ bảo vệ thực vật để xác nhận nguyên nhân, mức lan rộng và cách xử lý.",
+    "diseases": {
+      "bacterial_leaf_blight": "Kiểm tra vệt vàng/khô lan từ mép hoặc đầu lá; ghi tình trạng nước và lịch bón phân để trao đổi với cán bộ kỹ thuật.",
+      "brown_spot": "Chụp rõ các đốm và quầng màu, đồng thời ghi tình trạng nước và dinh dưỡng; triệu chứng tương tự có thể có nhiều nguyên nhân.",
+      "leaf_smut": "Chụp cận các chấm sẫm ở cả hai mặt lá để xác nhận; không suy tác nhân bệnh chỉ từ màu tối.",
+      "rust": "Chụp cả mặt dưới lá và ghi phạm vi lá bị ảnh hưởng để người có chuyên môn kiểm tra.",
+      "leaf_miner": "Chụp vùng đường hầm hoặc mô bị ăn ở cả hai mặt lá, ghi số cây có triệu chứng.",
+      "healthy": "Tiếp tục theo dõi và chụp đối chiếu nếu xuất hiện triệu chứng mới."
+    }
+  }
+}
