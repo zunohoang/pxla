@@ -1,0 +1,238 @@
+{
+  "seed": 42,
+  "config": {
+    "max_side": 256,
+    "clusters": 3,
+    "seed": 42,
+    "exg": 0.04,
+    "saturation": 0.15,
+    "lesion_a": -3.0,
+    "lesion_b": 8.0,
+    "dark_l": 30.0
+  },
+  "crops": {
+    "rice": {
+      "n_train": 90,
+      "n_test": 30,
+      "labels": [
+        "bacterial_leaf_blight",
+        "brown_spot",
+        "leaf_smut"
+      ],
+      "selected": {
+        "crop": "rice",
+        "method": "knn",
+        "features": "all",
+        "k": 3,
+        "macro_f1_mean": 0.8143667443667445,
+        "macro_f1_std": 0.1456130925534728,
+        "fold_scores": [
+          1.0,
+          0.7111111111111111,
+          0.6944444444444445,
+          0.9440559440559441,
+          0.7222222222222222
+        ]
+      },
+      "knn_test": {
+        "n": 30,
+        "accuracy": 0.9,
+        "macro_f1": 0.901940842444275,
+        "confusion": [
+          [
+            10,
+            0,
+            0
+          ],
+          [
+            1,
+            9,
+            0
+          ],
+          [
+            2,
+            0,
+            8
+          ]
+        ],
+        "labels": [
+          "bacterial_leaf_blight",
+          "brown_spot",
+          "leaf_smut"
+        ],
+        "prediction_labels": [
+          "bacterial_leaf_blight",
+          "brown_spot",
+          "leaf_smut"
+        ],
+        "coverage": 0.9333333333333333,
+        "accepted_accuracy": 0.9642857142857143
+      },
+      "svm_test": {
+        "n": 30,
+        "accuracy": 0.9,
+        "macro_f1": 0.8994708994708995,
+        "confusion": [
+          [
+            9,
+            0,
+            1
+          ],
+          [
+            2,
+            8,
+            0
+          ],
+          [
+            0,
+            0,
+            10
+          ]
+        ],
+        "labels": [
+          "bacterial_leaf_blight",
+          "brown_spot",
+          "leaf_smut"
+        ],
+        "prediction_labels": [
+          "bacterial_leaf_blight",
+          "brown_spot",
+          "leaf_smut"
+        ]
+      },
+      "test_processing_failures": [],
+      "svm_cv_mean": 0.8550597115302997,
+      "svm_cv_std": 0.18394420792219635,
+      "domains": {
+        "plain": {
+          "n": 30,
+          "accuracy": 0.9,
+          "macro_f1": 0.901940842444275,
+          "confusion": [
+            [
+              10,
+              0,
+              0
+            ],
+            [
+              1,
+              9,
+              0
+            ],
+            [
+              2,
+              0,
+              8
+            ]
+          ],
+          "labels": [
+            "bacterial_leaf_blight",
+            "brown_spot",
+            "leaf_smut"
+          ],
+          "prediction_labels": [
+            "bacterial_leaf_blight",
+            "brown_spot",
+            "leaf_smut"
+          ]
+        },
+        "field": {
+          "n": 0,
+          "status": "pending"
+        }
+      },
+      "brightness_stress": [
+        {
+          "factor": 0.6,
+          "segmentation_failures": 0,
+          "total": 30,
+          "successful_only_metrics": {
+            "n": 30,
+            "accuracy": 0.36666666666666664,
+            "macro_f1": 0.24123588829471185,
+            "confusion": [
+              [
+                1,
+                0,
+                9
+              ],
+              [
+                6,
+                0,
+                4
+              ],
+              [
+                0,
+                0,
+                10
+              ]
+            ],
+            "labels": [
+              "bacterial_leaf_blight",
+              "brown_spot",
+              "leaf_smut"
+            ],
+            "prediction_labels": [
+              "bacterial_leaf_blight",
+              "brown_spot",
+              "leaf_smut"
+            ]
+          }
+        },
+        {
+          "factor": 1.4,
+          "segmentation_failures": 0,
+          "total": 30,
+          "successful_only_metrics": {
+            "n": 30,
+            "accuracy": 0.5,
+            "macro_f1": 0.45004668534080294,
+            "confusion": [
+              [
+                3,
+                7,
+                0
+              ],
+              [
+                0,
+                10,
+                0
+              ],
+              [
+                1,
+                7,
+                2
+              ]
+            ],
+            "labels": [
+              "bacterial_leaf_blight",
+              "brown_spot",
+              "leaf_smut"
+            ],
+            "prediction_labels": [
+              "bacterial_leaf_blight",
+              "brown_spot",
+              "leaf_smut"
+            ]
+          }
+        }
+      ],
+      "processing_time": {
+        "mean_ms": 128.99742166725142,
+        "std_ms": 39.313952567799994
+      }
+    }
+  },
+  "field_photos": 0,
+  "limitations": [
+    "Image-level proxy groups must be audited against plant/session identity.",
+    "Severity cutoffs are project conventions, not an agronomic disease scale."
+  ],
+  "segmentation": {
+    "n": 0,
+    "required": 30,
+    "status": "pending",
+    "records": []
+  },
+  "field_requirement": "pending"
+}

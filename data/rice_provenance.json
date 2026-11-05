@@ -1,0 +1,9 @@
+{
+  "url": "https://archive.ics.uci.edu/static/public/486/rice+leaf+diseases.zip",
+  "sha256": "39b572e6fcef37c2c6ac6be22b09e337c996ebbc86fa9ef7d5bfe3c314c69d5d",
+  "images": 120,
+  "seed": 42,
+  "train": 90,
+  "test": 30,
+  "group_limitation": "UCI has no plant/session IDs; image IDs are proxies. Manual near-duplicate and acquisition audit required."
+}
