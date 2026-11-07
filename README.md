@@ -1,92 +1,73 @@
-# LeafLab · Bài tập lớn Xử lý ảnh
+# LeafLab v2 · Bài tập lớn Xử lý ảnh
 
-Chẩn đoán hỗ trợ bệnh lá lúa/cà phê từ ảnh điện thoại bằng xử lý ảnh truyền thống. Thuật toán lõi tự viết bằng NumPy; k-NN tự viết dùng cho demo, SVM thư viện dùng làm đối chiếu. Đề tài theo yêu cầu người dùng; quy cách theo file hướng dẫn BTL.
+Pipeline cổ điển cho ảnh lá lúa/cà phê. Lõi tự cài bằng NumPy; không dùng CNN hoặc bộ tách nền học sâu. k-NN dùng cho phân lớp; SVM/PCA và GrabCut là phương án thư viện đối chứng có ghi rõ.
 
-## Bắt đầu nhanh trên Windows
+## Chạy trên Windows
 
-Yêu cầu Python 3.10 trở lên (khuyến nghị 3.12), không cần GPU. Mở PowerShell trong thư mục dự án:
+Yêu cầu Python 3.10+ (khuyến nghị 3.12), không cần GPU. Mở PowerShell tại thư mục dự án:
 
 ```powershell
 python -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe -m pip install -r requirements-lock.txt
 .\.venv\Scripts\python.exe scripts/download_rice.py
 .\.venv\Scripts\python.exe run_experiments.py
 .\.venv\Scripts\python.exe -m streamlit run app.py
 ```
 
-Mở địa chỉ localhost mà Streamlit in ra. Nếu đã có thư viện và mô hình, chỉ cần lệnh cuối. Có thể bấm `START_DEMO.bat`. Mục **Ảnh mẫu** hoạt động sau khi tải UCI. Camera cần quyền trình duyệt; dùng tải ảnh nếu điện thoại truy cập qua HTTP nội bộ không cho mở camera.
+Nếu đã có thư viện và model v2, bấm `START_DEMO.bat`. Camera cần quyền trình duyệt và HTTPS/localhost; tải ảnh nếu truy cập HTTP nội bộ không mở được camera. Script tải UCI gộp theo ID, giữ group/split/mask đã chỉnh và tạo bản sao CSV trước khi ghi; không còn ghi đè toàn bộ manifest.
 
-## Làm bài theo 8 bước
+## Luồng xử lý
 
-1. Đọc [lộ trình thực hiện](docs/HUONG_DAN.md), thống nhất đề với giảng viên vì Đề 13 trong file gốc là làn đường.
-2. Chạy dữ liệu UCI để hiểu pipeline và kiểm chứng môi trường.
-3. Đọc `src/algorithms.py`, làm lại ví dụ tính tay và chạy `python scripts/verify_algorithms.py`.
-4. Bổ sung ảnh cà phê theo [hướng dẫn dữ liệu](data/README.md); không trộn nhãn giữa hai cây.
-5. Chụp ≥100 ảnh thật; chia theo cây/phiên chụp, gán nhãn lớp với người có chuyên môn.
-6. Gán nhãn pixel ≥30 ảnh test bằng [công cụ đa giác](docs/annotate.html). Dùng tập segval riêng để điều chỉnh ngưỡng.
-7. Chạy `python run_experiments.py` để tạo toàn bộ JSON, CSV, biểu đồ và mô hình. Lưu `manifest.csv` cùng kết quả để tái lập.
-8. Cập nhật báo cáo bằng kết quả của nhóm; điền tên, đóng góp, nhật ký, liên kết GitHub thật và luyện bảo vệ theo `docs/BAO_VE.md`.
+1. Đọc RGB, chuẩn hướng EXIF, cạnh dài tối đa 256 pixel.
+2. Stage 0: gray-world có giới hạn gain, CLAHE trên L*, median tùy chọn. Mặt nạ chói lấy từ ảnh gốc. Mask lá vẫn dùng RGB gốc để giữ quy ước màu giữa các ablation.
+3. Tách lá bằng hybrid ExG/HSV, HSV, ExG+Otsu hoặc ExG−ExR. Hình thái hỗ trợ SE chữ nhật. Đệm edge trước hình thái để không xóa thông tin lá chạm biên.
+4. K-means a*b*. Cụm đông nhất được giả định là mô khỏe; chọn cụm xa nhất nếu khoảng cách ≥8. Luật Lab cũ và Otsu a* được giữ để đối chiếu. Lọc vùng dưới 3 pixel, đóng hình thái tùy chọn tắt mặc định.
+5. Tính tỷ lệ vùng nghi tổn thương trên phần lá nhìn thấy. Pixel chói không tham gia phân cụm/đặc trưng; vùng chói nhiều phát cảnh báo vì tỷ lệ có thể bị đánh giá thấp.
+6. Trích 135 đặc trưng: màu 102 (histogram HSV/Lab và moment Lab), kết cấu 26 (GLCM bốn hướng và LBP vuông bán kính 1,2), hình dạng 7. Đặc trưng ROI dưới 1% lá trả vector 0 cố định. Không còn đặc trưng góc phần tư.
+7. Chuẩn hóa theo train, k-NN và từ chối theo phiếu/khoảng cách. Demo có láng giềng gần nhất và các thành phần khoảng cách để giải thích; đây không phải độ quan trọng nhân quả.
 
-## Năm chức năng bắt buộc
+`FEATURE_NAMES`, `FEATURE_DIM`, `FEATURE_GROUPS` trong `src/features.py` là nguồn chung cho app, model, thực nghiệm và báo cáo. Model dùng schema `leaflab-2`; model cũ bị từ chối với hướng dẫn tạo lại, không âm thầm chạy với vector sai chiều.
 
-| Chức năng | Cài đặt |
-|---|---|
-| Tách lá bằng ExG/HSV và hình thái | `src/algorithms.py`, `src/pipeline.py` |
-| K-means trong Lab | `kmeans`, `lesion_mask` |
-| Tỉ lệ diện tích và mức độ | `process`, mặt nạ tổn thương luôn nằm trong mặt nạ lá |
-| Histogram, LBP, GLCM và k-NN | 74 đặc trưng; chuẩn hóa chỉ trên train; `src/model.py` |
-| Demo chụp/tải, bệnh, mức độ, khuyến nghị | `app.py`, tải mask/JSON, cơ chế từ chối |
-
-## Kết quả và tính trung thực
-
-Kết quả thật ở `results/metrics.json`, từng ảnh ở `results/predictions.csv`, CV ở `results/cross_validation.json`, đối chiếu thư viện ở `results/verification.json`. `results/environment.json` ghi môi trường. Thời gian phụ thuộc máy và không hoàn toàn tái lập.
-
-Bản chạy ban đầu sử dụng UCI, chưa chứng minh hiệu quả ngoài đồng. UCI không có lớp lá khỏe. Mô hình chỉ phân biệt các bệnh đã học; cơ chế từ chối theo phiếu/khoảng cách không bảo đảm phát hiện mọi ảnh lạ. Tỉ lệ vùng nghi tổn thương không phải kết luận tác nhân bệnh. Ngưỡng mức độ <1%, 1–5%, 5–20%, ≥20% là quy ước đồ án, chưa được chuyên gia hiệu chuẩn.
-
-Chưa có ảnh tự chụp và mask thật thì `field_requirement`/`segmentation.status` là `pending`, không xuất IoU giả. Chưa nhập cà phê thì demo vẫn phân đoạn nhưng không dự đoán tên bệnh cà phê. Để so sánh nền trơn với ngoài đồng, cần báo cáo số ảnh, phân bố lớp và dùng cùng taxonomy; mỗi miền không có lớp nào đó thì ghi rõ macro-F1 vẫn tính trên danh sách lớp cố định.
-
-Ảnh test lỗi tách lá được tính là lỗi phân lớp với cột `processing_failed`, giữ nguyên mẫu số toàn tập. Lỗi ảnh train dừng thí nghiệm để rà soát trước khi học. Stress độ sáng báo riêng số lỗi và chỉ số trên ảnh xử lý thành công. Hãy đọc đúng mẫu số khi so sánh.
-
-## Kiểm thử và tái lập
+## Thực nghiệm và tái lập
 
 ```powershell
 python -m pytest -q
 python scripts/verify_algorithms.py
 python run_experiments.py --manifest data/manifest.csv --out results
+python scripts/compare_leaf_methods.py
 ```
 
-So sánh HSV/Lab với scikit-image; co/giãn với OpenCV cùng quy ước biên; GLCM với graycomatrix/graycoprops; K-means cùng tâm đầu với sklearn; k-NN cùng chuẩn hóa với sklearn. LBP của dự án dùng lân cận vuông, kiểm chứng độc lập ví dụ tính tay; không đánh đồng với nội suy tròn của scikit-image.
+- k-NN: k=1,3,5,7 × color/texture/shape/all, cùng folds phân nhóm, scaler train-only.
+- SVM RBF: C=0.1,1,10; gamma=scale/0.01; PCA tắt hoặc giữ 95% phương sai. Scaler/PCA fit bên trong mỗi fold.
+- Stress: RGB ×0.6/×1.4, Gaussian sigma 1/2, xoay 90/180/15 độ. Giữ model cố định, báo lỗi và accuracy end-to-end đầy đủ mẫu số.
+- So sánh tiền xử lý và luật Lab cũ trên train/CV, không chọn tham số từ test.
+- So sánh tách lá: hybrid, HSV, ExG+Otsu, ExG−ExR, SE 1×7/7×1, GrabCut OpenCV đối chứng. Minh họa định tính lấy TRAIN trong `leaf_methods_train.png`.
+- So sánh tổn thương: a*b*, luật Lab cũ, Otsu a*; K=2,3,4. IoU chỉ xuất khi có mask tay segtest. Chọn ngưỡng bằng segval trước khi khóa test.
 
-`requirements-lock.txt` lưu phiên bản đã chạy; cài bằng `pip install -r requirements-lock.txt` để tái tạo môi trường gần nhất. Seed 42 cố định dữ liệu, CV, khởi tạo và lấy mẫu K-means. Sau khi bổ sung dữ liệu chạy lại báo cáo, không sao chép kết quả UCI sang ảnh tự chụp.
+`results/metrics.json` là kết quả hiện tại; `cross_validation.json` là lưới k-NN; `predictions.csv` ghi từng ảnh; `verification.json` là đối chiếu số; `environment.json` ghi môi trường. Kết quả v1 lưu ở `results/baseline_v1/`. Không xem việc thêm bước mới là bảo đảm tăng accuracy. Xem [trạng thái sửa và giới hạn](docs/V2_CHANGELOG.md).
 
-## Báo cáo và tài liệu
+## Mức độ và khuyến nghị
 
-- `docs/BAO_CAO_BTL_LeafLab.pdf`: bản báo cáo 34 trang, gồm 25 trang nội dung chính.
-- `docs/BAO_CAO_BTL_LeafLab.docx`: bản chỉnh sửa được; công thức là đối tượng Office Math.
-- `docs/HUONG_DAN.md`: lộ trình 8 bước, phân công, thu ảnh, đánh giá và hồ sơ nộp.
-- `docs/BAO_VE.md`: đề cương 18 slide, bài nói, video và câu hỏi vấn đáp. Chưa phải tệp PowerPoint hay video.
-- `docs/annotate.html`: công cụ đa giác chạy cục bộ để tạo nhãn tay.
+`data/severity_rules.json` chứa ngưỡng quy ước diện tích <1%, 1–5%, 5–20%, ≥20% và bảng khuyến nghị bệnh × mức độ. Mức thấp tập trung theo dõi, mức cao yêu cầu khảo sát thêm và xác nhận chuyên môn; trường hợp từ chối có hướng dẫn riêng.
 
-Tạo lại bản thảo Word bằng `python scripts/build_report.py` sau khi có kết quả JSON. Cài thêm `requirements-docs.txt` nếu cần. Trên Windows, `python scripts/report_pdf_fallback.py` tạo PDF cùng nội dung bằng font Times và font ký hiệu toán của hệ thống. Bản PDF đã được kết xuất và kiểm tra; khi sửa Word, cần kiểm tra lại phân trang trong Word trước khi nộp. Script báo cáo hiện tập trung phân tích baseline UCI, nhóm phải viết bổ sung phần diễn giải khi có cà phê/ảnh thực địa.
+**IRRI chưa được ánh xạ:** nguồn PDF chính thức không truy cập được trong phiên xác minh; bản trích tìm kiếm có hàng bảng không nhất quán nên không dùng làm chuẩn. `irri_score=null` và trạng thái chờ xác minh được hiển thị rõ. Không dùng một thang 0–9 chung cho mọi bệnh hoặc cho cà phê, không biến tỷ lệ vùng nghi tổn thương thành chỉ định phun thuốc.
 
-## Cấu trúc
+## Dữ liệu cần hoàn thiện
 
-```text
-app.py                     giao diện demo
-run_experiments.py         CV, test, khảo sát, xuất kết quả
-src/algorithms.py          thuật toán NumPy
-src/pipeline.py            phân đoạn và đặc trưng
-src/model.py               k-NN và lưu model NPZ
-src/data.py                kiểm tra manifest và rò rỉ dữ liệu
-src/evaluation.py          accuracy, macro-F1, IoU, Dice
-scripts/                   tải dữ liệu, nhập ảnh, gán nhãn, kiểm chứng
-tests/                     kiểm thử hành vi và giao diện
-data/                      manifest, nguồn, hướng dẫn
-models/                    mô hình đã huấn luyện
-results/                   kết quả thực nghiệm
-docs/                      báo cáo, lộ trình, bảo vệ, gán nhãn
-```
+UCI Rice có 120 ảnh, 3 bệnh, không có lá khỏe và không có mask pixel. Chưa có ≥100 ảnh tự chụp, ≥30 mask tay hoặc mô hình cà phê; trạng thái tiếp tục `pending`. Không dùng ảnh tổng hợp để hoàn thành các chỉ tiêu này. Dữ liệu NASA không được dùng trong lần chạy này.
 
-## Ghi công và liêm chính
+Xem [hướng dẫn dữ liệu](data/README.md), [công cụ đa giác](docs/annotate.html) và [lộ trình 8 bước](docs/HUONG_DAN.md). Nhập ảnh field bắt buộc có `--group-map` chứa ID cây/lá/phiên và split thật; không coi mỗi ảnh chụp liên tiếp là mẫu độc lập.
 
-Xem tài liệu tham khảo trong báo cáo và [SOURCES.md](docs/SOURCES.md). Nhóm cần khai báo việc sử dụng AI, xác minh từng kết quả và hiểu từng thuật toán. Không tạo chữ ký, tên thành viên, ảnh thực địa, video bảo vệ hay lịch sử commit giả. Mã nguồn được tạo cho dự án này với hỗ trợ AI; các công thức/ý tưởng đã ghi nguồn, không sao chép một repo có sẵn.
+## Tài liệu và cấu trúc
+
+- `src/algorithms.py`: thuật toán NumPy; `src/pipeline.py`: cấu hình và chuỗi xử lý.
+- `src/features.py`: đặc trưng ROI/hình dạng và schema dùng chung.
+- `src/model.py`: k-NN, kiểm tra model, giải thích khoảng cách.
+- `src/advice.py`: mức độ và bảng khuyến nghị; `src/data.py`: manifest và gộp an toàn.
+- `scripts/`: tải/nhập ảnh, nhãn tay, phương án thư viện đối chứng, kiểm chứng và tạo báo cáo.
+- `docs/BAO_CAO_BTL_LeafLab.docx` và `.pdf`: báo cáo học thuật, số đo lấy từ JSON hiện tại.
+- `docs/BAO_VE.md`: kịch bản và đề cương 18 slide, chưa phải PowerPoint/video.
+
+Tạo lại báo cáo: cài `requirements-docs.txt`, chạy `python scripts/build_report.py`, rồi `python scripts/report_pdf_fallback.py` trên Windows có font Times/Segoe UI Symbol. Kiểm tra phân trang sau khi chỉnh Word. Tệp PDF được dựng từ cùng nội dung; Word giữ công thức Office Math chỉnh sửa được.
+
+Nguồn và giấy phép ở [SOURCES.md](docs/SOURCES.md). Nhóm cần đọc, tự chạy, giải thích mã và khai báo AI; điền tên, đóng góp, nhật ký, repo GitHub và chữ ký thật. Không tạo lịch sử commit hay minh chứng thực địa giả.

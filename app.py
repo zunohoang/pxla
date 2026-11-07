@@ -9,6 +9,8 @@ import streamlit as st
 
 from src.model import KNN
 from src.pipeline import Config, load_rgb, process
+from src.features import FEATURE_DIM
+from src.advice import recommendation, severity
 
 NAMES = {'bacterial_leaf_blight': 'Bạc lá lúa', 'brown_spot': 'Đốm nâu',
          'leaf_smut': 'Đốm than lá lúa', 'healthy': 'Lá khỏe',
@@ -34,7 +36,12 @@ def main():
     model_path = Path('models') / f'{crop}_knn.npz'
     model, config = None, Config()
     if model_path.is_file():
-        model, config, saved_crop = KNN.load(model_path)
+        try:
+            model, config, saved_crop = KNN.load(model_path)
+        except (ValueError, KeyError, OSError) as exc:
+            st.error(f'Không nạp được mô hình: {exc}')
+            st.info('Chạy python run_experiments.py để tạo lại mô hình tương thích.')
+            st.stop()
         if saved_crop != crop:
             st.error('Mô hình không đúng cây trồng.')
             st.stop()
@@ -81,8 +88,11 @@ def main():
     st.caption('Tỉ lệ trên diện tích chiếu của phần lá nhìn thấy. Ngưỡng <1%, 1–5%, 5–20%, ≥20% là quy ước kỹ thuật, chưa được hiệu chuẩn nông học.')
     if detail:
         st.write(f"Tỉ lệ phiếu láng giềng: {detail['vote']:.0%}. Đây không phải xác suất bệnh.")
-    st.info('Khuyến nghị: chụp thêm cả hai mặt lá và toàn cây, theo dõi sự lan rộng, giữ ảnh đối chiếu và nhờ cán bộ bảo vệ thực vật xác nhận trước khi xử lý.')
-    tabs = st.tabs(['1 · Ảnh đầu vào', '2 · Tách lá', '3 · Vết nghi bệnh', '4 · Giải thích'])
+    advice = recommendation(detail['label'] if detail else None, result['ratio'],
+                            rejected=detail['rejected'] if detail else True)
+    st.info('Khuyến nghị: '+advice)
+    st.caption('IRRI: chưa ánh xạ điểm vì bảng theo từng bệnh chưa được xác minh. Mức trên là quy ước diện tích của đồ án.')
+    tabs = st.tabs(['1 · Ảnh đầu vào', '2 · Tách lá', '3 · Vết nghi bệnh', '4 · Giải thích', '5 · Tiền xử lý'])
     with tabs[0]:
         st.image(rgb, width=600)
     with tabs[1]:
@@ -92,11 +102,22 @@ def main():
         st.image(result['overlay'], width=600)
         st.download_button('Tải mặt nạ vết nghi bệnh', png_bytes(result['lesion'].astype('uint8')*255), 'lesion_mask.png', 'image/png')
     with tabs[3]:
-        st.write('ExG/HSV → mở và đóng → thành phần liên thông → Lab → K-means → chọn cụm theo màu → diện tích → histogram/LBP/GLCM → k-NN.')
+        st.write(f'RGB gốc → ExG/HSV → mask lá. Ảnh chuẩn hóa + mask lá → K-means a*b* → vùng tổn thương → {FEATURE_DIM} đặc trưng ROI và hình dạng → k-NN.')
         st.dataframe(result['centers'], column_config={0: 'L*', 1: 'a*', 2: 'b*'})
         st.json(config.to_dict())
+        if model is not None:
+            explanation = model.explain(result['features'])
+            st.write('Các mẫu tham chiếu gần nhất')
+            st.dataframe(explanation['neighbors'])
+            st.write('Các thành phần đóng góp lớn nhất vào khoảng cách tới mẫu gần nhất')
+            st.dataframe(explanation['distance_terms'])
+            st.caption('Đây là thành phần khoảng cách, không phải bằng chứng nhân quả hoặc độ quan trọng của bệnh.')
+    with tabs[4]:
+        st.image(result['processed'], width=600, caption='Gray-world và CLAHE trên L* theo cấu hình đã lưu')
+        st.image(result['glare'].astype('uint8')*255, width=600, caption='Mặt nạ chói; chỉ phần chói nằm trong lá bị loại khỏi phân tích tổn thương')
     record = dict(crop=crop, prediction=detail, visible_lesion_ratio=result['ratio'],
-                  severity=result['severity'], warnings=result['warnings'], config=config.to_dict())
+                  severity=severity(result['ratio'], crop, detail['label'] if detail else None),
+                  recommendation=advice, warnings=result['warnings'], config=config.to_dict())
     st.download_button('Tải kết quả JSON', json.dumps(record, ensure_ascii=False, indent=2),
                        'leaflab_result.json', 'application/json')
 

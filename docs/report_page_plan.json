@@ -27,10 +27,13 @@
   "4 6 Quan sát các bước xử lý",
   "4 7 Ảnh hưởng độ sáng và thời gian",
   "4 8 Giao thức IoU và chuyển miền ngoài đồng",
+  "4 9 So sánh phiên bản và tiền xử lý",
+  "4 10 Đối chiếu phương pháp tách lá trên train",
   "Chương 5 Kết luận và hướng phát triển",
   "5 2 Hướng phát triển và kế hoạch kiểm chứng",
   "Tài liệu tham khảo",
   "Tài liệu tham khảo về dữ liệu và thư viện",
+  "Tài liệu bổ sung cho phiên bản v2",
   "Phụ lục Hướng dẫn chạy và minh chứng",
   "Phụ lục Sử dụng công cụ AI và hoàn thiện dữ liệu"
 ]

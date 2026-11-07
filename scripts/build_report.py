@@ -5,6 +5,7 @@ hard-coded: tables are rebuilt from results/metrics.json and verification.json.
 """
 import json
 import re
+import sys
 from pathlib import Path
 
 from docx import Document
@@ -16,11 +17,15 @@ from docx.shared import Cm, Pt, RGBColor
 from PIL import Image, ImageDraw, ImageFont
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+from src.features import FEATURE_DIM, FEATURE_GROUPS
 OUT = ROOT / 'docs'
 M = json.loads((ROOT / 'results/metrics.json').read_text(encoding='utf-8'))
 R = M['crops']['rice']
 CV = json.loads((ROOT / 'results/cross_validation.json').read_text(encoding='utf-8'))
 V = json.loads((ROOT / 'results/verification.json').read_text(encoding='utf-8'))
+BASE_PATH = ROOT / 'results/baseline_v1/metrics.json'
+BASE = json.loads(BASE_PATH.read_text(encoding='utf-8')) if BASE_PATH.exists() else None
 ENV = json.loads((ROOT / 'results/environment.json').read_text(encoding='utf-8'))
 doc = Document()
 section = doc.sections[0]
@@ -49,6 +54,7 @@ field.set(qn('w:instr'), 'PAGE')
 footer._p.append(field)
 source_md = []
 page_titles = []
+locations = {}
 
 
 def p(text, bold=False):
@@ -63,7 +69,7 @@ def p(text, bold=False):
 
 def h(text, level=2):
     """Add a numbered academic heading with black typography."""
-    text = re.sub(r'^(\d) (\d) ', r'\1.\2 ', text)
+    text = re.sub(r'^(\d) (\d+) ', r'\1.\2 ', text)
     doc.add_heading(text, level)
     source_md.append('#' * (level+1) + ' ' + text + '\n')
 
@@ -94,6 +100,9 @@ def equation(text, number):
 def table(caption, headers, rows, widths=None):
     """Add repeat-header table with explicit borders, padding and wrapping."""
     cp = p(caption)
+    match = re.match(r'(Bảng) (\d)[ .](\d)', caption)
+    if match:
+        locations[f'{match[1]} {match[2]}.{match[3]}'] = len(page_titles)
     cp.paragraph_format.keep_with_next = True
     cp.runs[0].bold = True
     t = doc.add_table(rows=1, cols=len(headers))
@@ -158,6 +167,9 @@ def table(caption, headers, rows, widths=None):
 def figure(path, caption, width=14):
     """Insert original PNG evidence with a paired caption below."""
     paragraph = doc.add_paragraph()
+    match = re.match(r'(Hình) (\d)[ .](\d)', caption)
+    if match:
+        locations[f'{match[1]} {match[2]}.{match[3]}'] = len(page_titles)
     paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
     paragraph.paragraph_format.keep_with_next = True
     paragraph.add_run().add_picture(str(path), width=Cm(width))
@@ -182,8 +194,8 @@ def draw_pipeline():
     image = Image.new('RGB', (1500, 800), 'white')
     draw = ImageDraw.Draw(image)
     font = ImageFont.truetype('C:/Windows/Fonts/arial.ttf', 30)
-    labels = ['Ảnh RGB đã chuẩn hướng', 'ExG và HSV', 'Hình thái và vùng liên thông',
-              'K-means trong Lab', 'Diện tích và mức độ', 'Histogram  LBP  GLCM',
+    labels = ['Ảnh RGB và Stage 0', 'ExG và HSV', 'Hình thái và vùng liên thông',
+              'K-means trong Lab', 'Diện tích và quy ước mức độ', 'Đặc trưng ROI và hình dạng',
               'Chuẩn hóa theo train', 'k-NN và kiểm tra từ chối', 'Kết quả và khuyến nghị']
     for i, text in enumerate(labels):
         row, col = divmod(i, 3)
@@ -210,7 +222,7 @@ def draw_pipeline():
 
 
 def build():
-    """Author 25 pages of main content plus front matter and references."""
+    """Author the measured report, front matter, references and appendices."""
     page('Phân tích bệnh lá lúa và cà phê từ ảnh điện thoại', True)
     doc.paragraphs[-1].style = doc.styles['Title']
     doc.paragraphs[-1].alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -265,6 +277,7 @@ def build():
         'Hình 3.1 Luồng phân tích một ảnh lá   14',
         'Hình 4.1 Ma trận nhầm lẫn k-NN trên 30 ảnh test   25',
         'Hình 4.2 Ảnh test cùng mask lá và overlay   26',
+        'Hình 4.3 Đối chiếu phương pháp tách lá trên train   30',
         'Bảng 1.1 Đầu vào đầu ra và ràng buộc   7',
         'Bảng 1.2 Vị trí của các hướng tiếp cận   8',
         'Bảng 2.1 Ví dụ tính tay K-means   12',
@@ -275,8 +288,10 @@ def build():
         'Bảng 4.2 Phân bố dữ liệu lúa   21',
         'Bảng 4.3 Kết quả phân lớp trên cùng dữ liệu   23',
         'Bảng 4.4 Macro-F1 năm fold theo cấu hình   24',
-        'Bảng 4.5 Kiểm tra stress độ sáng   27',
+        'Bảng 4.5 Stress độ sáng mờ và xoay   27',
         'Bảng 4.6 Trạng thái dữ liệu cần bổ sung   28',
+        'Bảng 4.7 Accuracy v1 và v2 trên cùng test   29',
+        'Bảng 4.8 Ablation tiền xử lý trên train CV   29',
         'Bảng 5.1 Kết quả so với mục tiêu   29']:
         para = p(text)
         para.paragraph_format.space_after = Pt(5)
@@ -339,7 +354,7 @@ def build():
     p('Giữ phân hoạch Cj cố định, đạo hàm của J theo μj bằng 2|Cj|μj−2Σx. Cho đạo hàm bằng 0 thu được trung bình cụm. Hessian bằng 2|Cj|I là xác định dương nếu cụm không rỗng, nên trung bình là cực tiểu duy nhất cho bước cập nhật. Với cụm rỗng, mã giữ tâm cũ để tránh chia cho 0.')
     p('Ở bước gán, từng điểm chọn tâm có bình phương khoảng cách nhỏ nhất nên J không tăng. Ở bước cập nhật, trung bình tối thiểu hóa J với phân hoạch hiện tại nên J cũng không tăng. J bị chặn dưới bởi 0, do đó dãy giá trị mục tiêu hội tụ. Kết quả này không chứng minh đạt tối ưu toàn cục; khởi tạo có thể đưa tới các nghiệm cục bộ khác nhau.')
     p('Triển khai dùng khởi tạo k-means++ và seed 42, tối đa 60 vòng, dừng khi thay đổi tâm lớn nhất dưới 10⁻⁶. Nếu lá có quá nhiều pixel, chọn tối đa 8000 pixel bằng seed cố định để học tâm rồi gán toàn bộ pixel lá về các tâm đó. Thời gian giảm nhưng tâm vẫn là xấp xỉ của bài toán toàn ảnh.')
-    p('ID cụm chỉ là chỉ số mảng, không có ý nghĩa mô khỏe hay bệnh. Sau phân cụm, chọn tâm có a*>−3 và b*>8 hoặc L*<30 làm ứng viên tổn thương. Đây là heuristic màu cố định của baseline. Vùng vàng do ánh sáng hoặc vùng bóng có thể bị chọn nhầm; ngưỡng phải được kiểm định bằng nhãn tay.')
+    p('Pipeline chính phân cụm trên a*b* để giảm phụ thuộc trực tiếp vào độ sáng L*. Cụm đông nhất là giả định mô khỏe; chọn cụm xa tâm này nhất nếu khoảng cách ít nhất 8 đơn vị màu. Tham số là mặc định kỹ thuật đã khóa, chưa hiệu chuẩn bằng nhãn tay. Luật Lab theo ngưỡng cũ và Otsu trên a* được giữ làm đối chứng. Không tự gán tác nhân bệnh cho ID cụm.')
 
     page('2 4 Ví dụ số và tỷ lệ diện tích')
     p('Xét ảnh ma trận 4×4 trong Bảng 2.1, mỗi pixel có vector Lab=(L*,0,0) với L* lấy từ ô tương ứng. Chọn K=2 và tâm đầu L* bằng 0 và 8. Vì a*=b*=0 ở mọi điểm, khoảng cách Lab rút về khoảng cách một chiều trên L*. Đây là ví dụ tính tay minh họa thuật toán, không phải dữ liệu bệnh thật.')
@@ -348,7 +363,7 @@ def build():
     p('Bước gán: các giá trị 0 có d²=(0,64), giá trị 2 có d²=(4,36), giá trị 8 có d²=(64,0), giá trị 10 có d²=(100,4). Vì vậy tám pixel ở hai cột trái thuộc cụm 1, tám pixel còn lại thuộc cụm 2. Bước cập nhật: μ₁=(4×0+4×2)/8=1 và μ₂=(4×8+4×10)/8=9. Gán lại không đổi; mỗi pixel lệch tâm một đơn vị nên SSE=16. Ví dụ đã kiểm chứng bằng NumPy trong tests/test_core.py. Phép đối chiếu K-means thư viện với cùng khởi tạo nằm trong scripts/verify_algorithms.py.')
     equation('r = |D∩L|/|L|;   phần trăm tổn thương = 100r', '2.6')
     p('L là mask lá dự đoán, D là vùng nghi tổn thương dự đoán. Mã ràng buộc D⊆L trước khi đếm, kiểm tra mask lá không rỗng và không dùng hình chữ nhật bao quanh lá làm mẫu số. Nếu |L|=1000 và |D|=120 thì r=0,12 tương ứng 12%, thuộc mức trung bình theo quy ước đồ án.')
-    p('Quy ước mức độ gồm dưới 1% chưa thấy vùng nghi tổn thương đáng kể, từ 1% đến dưới 5% nhẹ, từ 5% đến dưới 20% trung bình, từ 20% trở lên nặng. Các ngưỡng này không thay thế thang bệnh đã được chuyên gia nông học chuẩn hóa. BRACOL dùng cách phân mức riêng [4]; không chuyển nhãn mức độ giữa hai hệ mà không hiệu chuẩn.')
+    p('Quy ước mức độ gồm dưới 1%, 1–5%, 5–20% và từ 20% trở lên. Ngưỡng được tra từ severity_rules.json, không phải thang IRRI. Nguồn SES chính thức không tải được trong phiên xác minh; các snippet bảng có hàng lệch nên chưa dùng để ánh xạ. Điểm IRRI luôn null cho đến khi xác nhận đúng bảng, bệnh và ấn bản. Không dùng thang lúa cho cà phê.')
     p('r là tỷ lệ trên diện tích chiếu của lá nhìn thấy. Lá cong hoặc ảnh xiên làm biến dạng diện tích chiếu không đồng đều. Sai số mask lá tác động trực tiếp mẫu số, nên cần báo cả IoU lá và sai số tuyệt đối của r, thay vì chỉ báo một con số phần trăm từ giao diện.')
 
     page('2 5 Đặc trưng kết cấu và phân lớp')
@@ -356,9 +371,12 @@ def build():
     p('LBP dùng 8 láng giềng vuông theo thứ tự Đông, Đông Bắc, Bắc, Tây Bắc, Tây, Tây Nam, Nam, Đông Nam. Số lần đổi bit trên vòng không quá 2 là mẫu uniform; gom theo số bit 1 thành 9 bin và một bin nonuniform. Chỉ lấy tâm có toàn bộ cửa sổ 3×3 nằm trong lá. Đây là biến thể vuông, khác LBP tròn có nội suy của Ojala và cộng sự [7].')
     p('Ví dụ tâm bằng 5, láng giềng theo thứ tự trên là [7,8,4,6,2,9,5,1]. Các bit là [1,1,0,1,0,1,1,0], mã bằng 1+2+8+32+64=107. Kiểm thử độc lập tính theo định nghĩa xác nhận kết quả. Không ép so bằng từng pixel với hàm thư viện khi hai định nghĩa lân cận khác nhau.')
     equation('G(i,j) = số cặp mức xám (i,j) tại độ lệch δ;   P = (G+Gᵀ)/Σ(G+Gᵀ)', '2.8')
-    p('GLCM lượng tử ảnh xám thành 16 mức, lấy các độ lệch (0,1), (1,0), (1,1), đối xứng và chuẩn hóa. Cả hai pixel của cặp phải thuộc lá. Từ P tính contrast, dissimilarity, homogeneity, ASM, energy và correlation rồi lấy trung bình ba hướng [8]. Cặp không tồn tại cho ma trận 0; correlation của phương sai bằng 0 quy ước bằng 1, cần xét cùng lượng thông tin của vùng.')
+    p('GLCM lượng tử 16 mức và lấy bốn độ lệch (0,1), (1,0), (1,1), (-1,1). Cả hai pixel phải thuộc vùng tổn thương không chói. Sáu thuộc tính được lấy trung bình theo bốn hướng. LBP dùng lân cận vuông ở bán kính 1 và 2; chỉ dùng tâm có đầy đủ cửa sổ trong ROI. Biến thể này không hoàn toàn bất biến với mọi góc xoay trên lưới pixel.')
     equation('contrast = Σ(i−j)²Pij; ASM = ΣPij²; homogeneity = ΣPij/[1+(i−j)²]', '2.9')
-    p('Vector gồm 48 bin HSV, 6 moment Lab, 6 đặc trưng GLCM, 10 bin LBP và 4 trung bình xám theo góc phần tư, tổng 74 chiều. Chuẩn hóa z=(x−m)/s với m,s chỉ học từ train; s rất nhỏ thay bằng 1. k-NN dùng khoảng cách Euclid và phiếu đồng đều. SVM RBF thư viện dùng C=1, gamma theo scale, class_weight balanced làm đối chiếu; nó không thay mã NumPy cốt lõi.')
+    p(f'Vector phiên bản {M.get("schema")} có {FEATURE_DIM} chiều: 102 đặc trưng màu HSV và Lab, 26 đặc trưng kết cấu và 7 đặc trưng hình dạng. Đặc trưng màu và kết cấu chỉ tính trên vùng tổn thương hợp lệ; vùng dưới 1% lá dùng vector 0 cố định. Không có đặc trưng góc phần tư. Chuẩn hóa và PCA tùy chọn chỉ fit trên train của từng fold; SVM đối chứng được chọn C, gamma và bật/tắt PCA bằng cùng các fold.')
+    equation('gain_c = mean(mean_R,mean_G,mean_B)/mean_c;  I′c = clip(gain_c × Ic)', '2.10')
+    equation('eccentricity = sqrt(1−λmin/λmax);  solidity = area/convex_hull_area', '2.11')
+    p('gain được chặn trong [0,5;2]. CLAHE cắt histogram từng ô theo clip_limit×diện_tích_ô/256, phân phối lại phần dư, lấy CDF rồi nội suy giữa tâm ô. λ là trị riêng của moment bậc hai chuẩn hóa. Khoảng cách tới mép dùng EDT Euclid, chuẩn hóa bằng căn diện tích lá; không suy đơn vị cm nếu chưa có vật chuẩn.')
 
     page('Chương 3 Thiết kế và cài đặt', True)
     h('3 1 Kiến trúc tổng thể')
@@ -394,35 +412,35 @@ def build():
             'Kiểm tra diện tích tối thiểu 40 pixel, trả mask hoặc báo lỗi'])
     p('Thành phần nối seed được chọn thay vì giữ tất cả vùng màu nhằm hạn chế nhiễu và các vật nhỏ. Lấp lỗ sau chọn thành phần giúp đưa màu hoại tử kín trong lá trở lại vùng xử lý. Tuy nhiên thao tác có thể lấp cả lỗ thủng thật; đây là giả định hình học cần được đối chiếu với cách người gán nhãn định nghĩa diện tích lá.')
     p('Nếu lá gần hết xanh hoặc nền tương tự lá, lựa chọn theo seed có thể sai. Phiên bản baseline không tự chuyển sang mô hình học sâu khi thất bại; nó hiển thị lỗi hoặc cảnh báo để người dùng chụp lại. Một lỗi im lặng trả về toàn ảnh sẽ làm tỷ lệ diện tích có vẻ hợp lệ nhưng sai ý nghĩa, nên mã kiểm tra mặt nạ quá nhỏ và cảnh báo diện tích bất thường.')
-    p('Không mở mask tổn thương bằng phần tử 3×3 theo mặc định vì thao tác có thể xóa đốm bệnh nhỏ. Hình thái học trong pipeline tập trung vào mask lá. Nếu bổ sung lọc đốm, phải khảo sát ảnh hưởng tới recall của tổn thương nhỏ trên segval và ghi rõ thay đổi.')
+    p('Mask tổn thương bỏ thành phần dưới 3 pixel; đóng hình thái là tùy chọn tắt mặc định để bảo toàn đốm nhỏ. Mask lá được đệm biên edge trước hình thái học để giữ cảnh báo lá bị cắt. Nếu bổ sung lọc đốm, phải khảo sát ảnh hưởng tới recall của tổn thương nhỏ trên segval và ghi rõ thay đổi.')
 
     page('3 4 Giả mã K-means và chọn vùng tổn thương')
     pseudo(['Đầu vào ảnh RGB, mask lá L và K=3',
-            'Chuyển toàn ảnh sang Lab, lấy X gồm pixel thuộc L',
+            'Stage 0 cân bằng màu và CLAHE L*, lấy a*b* của pixel lá không chói',
             'Lấy mẫu tối đa 8000 pixel bằng seed 42',
             'Khởi tạo K tâm theo xác suất khoảng cách bình phương',
             'Lặp gán mỗi điểm mẫu về tâm gần nhất',
             'Cập nhật tâm bằng trung bình, giữ tâm cũ nếu cụm rỗng',
             'Dừng khi tâm thay đổi <10⁻⁶ hoặc đủ 60 vòng',
             'Gán toàn bộ pixel lá về các tâm đã học',
-            'Chọn tâm vàng nâu hoặc tối theo quy tắc Lab cố định',
+            'Chọn cụm xa cụm đông nhất khi khoảng cách đạt ngưỡng tối thiểu',
             'Tạo D và ràng buộc D là tập con của L, trả D và các tâm'])
     p('Khởi tạo k-means++ ưu tiên điểm xa các tâm đã chọn. Khi mọi điểm giống nhau, tổng trọng số bằng 0; mã chọn điểm đầu để tránh phép chia không xác định. K không vượt số điểm mẫu. Cụm rỗng không được cập nhật bằng trung bình của mảng rỗng, nhờ đó tâm luôn hữu hạn.')
-    p('Quy tắc chọn tâm dùng cả màu và độ sáng để tạo ứng viên. Nó không học từ nhãn bệnh và không đảm bảo mỗi cụm ứng với một mô sinh học. Khi toàn lá chuyển vàng, nhiều hoặc tất cả cụm có thể được chọn. Khi bóng đổ nằm trong lá, cụm tối có thể thành dương tính giả. Các tình huống này cần nhãn pixel để đo.')
+    p('Quy tắc cụm đông nhất là mô khỏe có thể sai khi lá bệnh chiếm đa số. Ngưỡng khoảng cách tối thiểu giúp lá đồng màu không bị ép có tổn thương. Mặt nạ được lọc bỏ thành phần dưới 3 pixel; đóng hình thái là tùy chọn tắt mặc định để hạn chế xóa đốm nhỏ. Vùng chói được phát hiện trên ảnh gốc và loại khỏi phân cụm, nhưng vẫn ghi cảnh báo diện tích không quan sát được.')
     p('Mask tự động không được dùng làm ground truth cho cùng thuật toán. Công cụ đa giác cung cấp đường đi độc lập để con người tạo nhãn. Tập segval dùng khảo sát K, ngưỡng tâm và phần tử cấu trúc; segtest khóa trước để đánh giá IoU cuối cùng. Khi chưa có segtest, báo cáo giữ trạng thái chưa đo thay vì mặc định thuật toán phân đoạn đúng.')
 
     page('3 5 Trích đặc trưng và huấn luyện')
     pseudo(['Đầu vào ảnh, mask lá và nhãn đã xác nhận trong manifest',
-            'Tạo histogram HSV 16 bin mỗi kênh chỉ từ pixel lá',
+            'Tạo histogram HSV và Lab 16 bin mỗi kênh từ ROI tổn thương',
             'Tính trung bình và độ lệch chuẩn của ba kênh Lab',
-            'Chuyển xám, tạo GLCM có mask ở ba hướng và lấy 6 thuộc tính',
-            'Tính LBP vuông, chỉ giữ tâm có đủ 3×3 trong mask lá',
-            'Gom LBP uniform thành 10 bin và lấy bốn trung bình xám theo vùng',
-            'Ghép vector 74 chiều, kiểm tra mọi giá trị hữu hạn',
+            'Chuyển xám, tạo GLCM có mask ở bốn hướng và lấy 6 thuộc tính',
+            'Tính LBP vuông bán kính 1 và 2 với cửa sổ nằm trong ROI',
+            'Gom LBP mỗi bán kính thành 10 bin; thêm bảy đặc trưng hình dạng',
+            'Ghép vector 135 chiều theo FEATURE_GROUPS, kiểm tra mọi giá trị hữu hạn',
             'Trong mỗi fold train, fit chuẩn hóa và k-NN trên phần train của fold',
             'Chọn k và nhóm đặc trưng theo macro-F1 validation trung bình',
             'Fit lại trên toàn train, lưu model, đánh giá test đúng một giao thức'])
-    p('Các nhóm đặc trưng khảo sát là màu gồm 54 chiều đầu, kết cấu gồm 6 GLCM và 10 LBP, toàn bộ gồm 74 chiều kể cả 4 trung bình vùng. Mỗi cấu hình dùng cùng folds để giảm nhiễu do cách chia. k thuộc {1,3,5,7}; trường hợp số mẫu train nhỏ hơn k thì mã lấy số láng giềng có sẵn và ghi rõ dữ liệu cần đủ lớn.')
+    p(f'Các nhóm ablation dùng chung FEATURE_GROUPS: màu {len(FEATURE_GROUPS["color"])} chiều, kết cấu {len(FEATURE_GROUPS["texture"])} chiều, hình dạng {len(FEATURE_GROUPS["shape"])} chiều và toàn bộ {FEATURE_DIM} chiều. Hình dạng gồm số vết, diện tích trung bình/lớn nhất theo diện tích lá, eccentricity, solidity, khoảng cách chuẩn hóa tới mép lá và tỷ lệ tổn thương. Các cấu hình dùng cùng folds; không chọn tham số từ test.')
     p('Chuẩn hóa nằm trong từng lần fit của mô hình, nên thống kê validation không đi vào scaler. SVM đối chiếu dùng pipeline StandardScaler và SVC theo đúng nguyên tắc này. Không dùng test để chọn ngưỡng ExG, kích thước ảnh hoặc k sau khi thấy kết quả. Nếu sửa phương pháp dựa vào lỗi test, cần một test độc lập mới cho kết luận cuối.')
     p('Cơ chế từ chối dựa trên tỷ lệ phiếu thấp hơn 0,6 hoặc khoảng cách gần nhất vượt 1,5 lần phân vị 95% khoảng cách láng giềng gần nhất giữa các mẫu train. Đây là heuristic để trình diễn khả năng không ép nhãn; chưa có tập ngoài phân phối để hiệu chuẩn độ nhạy từ chối.')
 
@@ -435,15 +453,15 @@ def build():
         ['Gán toàn bộ pixel lá', 'O(PK)', 'O(PK)'],
         ['Histogram LBP GLCM', 'O(P+g²)', 'O(P+g²)'],
         ['k-NN một truy vấn', 'O(nd+n log n)', 'O(nd) dữ liệu train']], [6.2,5.2,4.6])
-    p('P=M×N, Q≤8000, T≤60, g=16 là số mức xám, n là số ảnh train và d≤74. Vì K nhỏ và cố định, đổi màu và vùng liên thông thường chiếm tỷ trọng đáng kể ở ảnh nhỏ. Chi phí chính xác phụ thuộc cách vector hóa, không thể suy trực tiếp thời gian chạy chỉ từ ký hiệu O.')
-    p('Mảng sliding_window_view biểu diễn cửa sổ bằng view để tránh sao chép toàn bộ cửa sổ; phép all/any vẫn thực hiện số phép toán tỷ lệ s². Vùng liên thông dùng hàng đợi tránh đệ quy sâu. Giới hạn cạnh dài giúp giữ chi phí ổn định giữa ảnh điện thoại có độ phân giải khác nhau, đồng thời có thể làm mất đốm rất nhỏ.')
+    p(f'P=M×N, Q≤8000, T≤60, g=16, n là số ảnh train và d≤{FEATURE_DIM}. Biến đổi khoảng cách Euclid dùng hai lượt bao dưới parabol O(P). Bao lồi dùng monotone chain O(B log B) trên B điểm biên và raster hóa đa giác. Cần đo thời gian thực tế vì các phép duyệt vùng bằng Python có hằng số chi phí đáng kể.')
+    p('Stage 0 gồm gray-world có giới hạn gain, CLAHE trên L* với histogram cắt và nội suy giữa tâm ô; median 3×3 là tùy chọn. Gray-world cân bằng màu nhưng không tự sửa độ sáng tổng thể. CLAHE không khôi phục thông tin đã bão hòa. Mask lá vẫn dùng RGB gốc để giữ quy ước màu giữa các ablation. Tiền xử lý và phương pháp phân đoạn được khảo sát trên train/CV hoặc segval.')
     p('Để ước lượng bán kính từ chối, khoảng cách train–train được tính bằng ||a||²+||b||²−2aᵀb. Công thức tránh tensor n×n×d; sai số dấu âm rất nhỏ được chặn về 0 trước căn bậc hai. Bộ nhớ vẫn O(n²) cho ma trận khoảng cách, nên với tập rất lớn cần xử lý theo khối hoặc mô hình láng giềng phù hợp hơn.')
     p('Các phép trừ kênh màu dùng float64 để tránh modulo của uint8. Chuẩn hóa histogram dùng tổng ít nhất 1 để tránh chia 0; cấu hình và kiểm tra ảnh giữ đặc trưng hữu hạn. Mask lưu 0/255 khi xuất PNG, trong tính toán dùng bool. Sự khác biệt giữa 0/1 và 0/255 cần được chuẩn hóa trước đánh giá.')
 
     page('3 7 Kiểm chứng và giao diện demo')
     table('Bảng 3 3 Sai số đối chiếu cùng quy ước', ['Phép toán', 'Max abs', 'MSE'], [
-        [r['name'], f"{r['max_abs']:.3e}", f"{r['mse']:.3e}"] for r in V], [7.2,4.4,4.4])
-    p('Bảng 3 3 lấy trực tiếp từ verification.json. HSV và Lab so với scikit-image [11]; co/giãn so với OpenCV có nền biên 0 [13]; GLCM và thuộc tính so với scikit-image; K-means so cùng tâm đầu với sklearn [12]. Lab có sai khác nhỏ do hằng số chuyển màu và điểm trắng. K-means có sai số dấu chấm động ở mức rất nhỏ.')
+        [r['name'], f"{r['max_abs']:.3e}", f"{r['mse']:.3e}"] for r in V if r['name'] in ['HSV','Lab D65','erode','dilate','GLCM','K-means SSE','CLAHE OpenCV same 8x8 tiles clip2','Region eccentricity solidity','Euclidean distance transform','Otsu uint8']], [7.2,4.4,4.4])
+    p(f'Bộ kiểm chứng có {len(V)} phép đối chiếu hoặc ví dụ số. Bảng 3.3 chọn các phép tiêu biểu; toàn bộ max abs và MSE ở verification.json. CLAHE so với OpenCV cùng lưới ô và clip-limit, dung sai một mức xám do làm tròn; EDT so SciPy; eccentricity và solidity so regionprops; GLCM đối chiếu cả offset âm.')
     p('LBP được kiểm chứng bằng định nghĩa lân cận vuông và ví dụ 107. Không gọi khác biệt nội suy với LBP tròn của thư viện là sai số cài đặt. Kiểm thử hành vi còn kiểm tra cụm rỗng, mask rỗng, mask tổn thương là tập con của lá, rò rỉ group và model lưu–nạp.')
     p('Demo hiển thị ảnh gốc, mask lá, overlay và tham số. Camera dùng st.camera_input [14], phụ thuộc quyền trình duyệt và ngữ cảnh truy cập an toàn. Khi chưa có mô hình cà phê, demo vẫn chạy phân đoạn và ghi rõ chưa phân lớp. Khi UCI chưa có lá khỏe, giao diện hiển thị danh sách lớp và giới hạn này.')
 
@@ -458,8 +476,8 @@ def build():
     p('Không có lớp healthy trong bộ này. Vì vậy accuracy ở Chương 4 là phân biệt ba bệnh đã biết, không phải độ chính xác phân biệt cây khỏe và bệnh. Mask vết bệnh không được cung cấp trong bản tải; chưa có cơ sở tính IoU với nhãn tay.')
 
     page('4 2 Giao thức chia tập và chỉ số')
-    p('Script tải xếp thứ tự file và dùng seed 42 chọn 10 ảnh mỗi lớp làm test, 30 ảnh còn lại làm train. Vì dữ liệu nguồn không có định danh cây/phiên, group ban đầu bằng id ảnh. Cách chia có phân tầng theo lớp nhưng độc lập ở cấp cây chưa được chứng minh. Đây là giới hạn quan trọng khi diễn giải kết quả 90%.')
-    p('Bên trong 90 ảnh train, StratifiedGroupKFold tạo 5 fold, không cho group đi qua train/validation [12]. Cấu hình k-NN được chọn theo macro-F1 trung bình của 12 tổ hợp k và tập đặc trưng. Scaler chỉ fit trong phần train của fold. Cấu hình phân đoạn K=3 và ngưỡng màu là baseline cố định, chưa tối ưu bằng segtest.')
+    p('Script tải dùng seed 42 khởi tạo train/test và giữ group/split/mask đã chỉnh khi gộp lại manifest. UCI không cung cấp định danh cây/phiên, nên group ban đầu bằng id ảnh. Phân tầng theo lớp không chứng minh độc lập ở cấp cây; cần rà ảnh gần trùng và bổ sung hồ sơ thu thập.')
+    p(f'Tập train dùng StratifiedGroupKFold với seed 42. k-NN khảo sát {len(FEATURE_GROUPS)*4} cấu hình gồm bốn nhóm đặc trưng và k=1,3,5,7. SVM RBF khảo sát C=0.1,1,10; gamma=scale hoặc 0.01; PCA tắt hoặc giữ 95% phương sai. Mọi phép fit scaler/PCA nằm trong fold. Ablation tiền xử lý dùng train/CV; test chỉ dùng đánh giá cấu hình đã khóa.')
     equation('accuracy = số dự đoán đúng/n;   F1c = 2TPc/(2TPc+FPc+FNc)', '4.1')
     equation('macro F1 = (1/C)Σc F1c;   IoU = |D∩G|/|D∪G|', '4.2')
     equation('Dice = 2|D∩G|/(|D|+|G|);   MAE tỷ lệ = (1/n)Σ|r̂i−ri|', '4.3')
@@ -472,44 +490,44 @@ def build():
          f"{R['knn_test']['accuracy']:.1%}", f"{R['knn_test']['macro_f1']:.4f}"],
         ['SVM RBF', f"{R['svm_cv_mean']:.4f} ± {R['svm_cv_std']:.4f}",
          f"{R['svm_test']['accuracy']:.1%}", f"{R['svm_test']['macro_f1']:.4f}"]], [3.4,5,3.8,3.8])
-    p('Hai mô hình đều dự đoán đúng 27/30 ảnh test. Macro-F1 khác nhẹ do phân bố lỗi theo lớp. k-NN được triển khai làm mô hình chính để đáp ứng yêu cầu tự cài, còn SVM dùng làm đối chiếu với cùng vector và train/test. Bảng 4 3 không cho thấy bằng chứng đủ mạnh rằng một mô hình vượt trội tổng quát.')
-    p('SVM có macro-F1 CV trung bình cao hơn trong lần chia này nhưng độ lệch chuẩn giữa folds cũng lớn. k-NN toàn bộ đặc trưng với k=3 được chọn trong không gian cấu hình của k-NN; không dùng điểm test để đổi sang một k khác. So sánh công bằng hơn cần nhiều nhóm thu thập độc lập và kiểm định trên các nhóm đó.')
-    p('Accuracy 90% trên 30 mẫu chỉ tương ứng ba lỗi; một ảnh đổi nhãn làm accuracy thay đổi 3,33 điểm phần trăm. Do đó chênh lệch nhỏ của macro-F1 không nên được mô tả là cải tiến chắc chắn. Khoảng bất định do lấy mẫu, nguồn ảnh và nguy cơ ảnh gần trùng đều cần được xét.')
-    p(f"Cơ chế từ chối giữ lại {R['knn_test']['coverage']:.1%} ảnh test; accuracy trên phần được giữ là {R['knn_test']['accepted_accuracy']:.1%}. Kết quả này có mẫu số khác accuracy 90% trên toàn tập. Không thay giá trị toàn tập bằng giá trị trên nhóm đã chọn để làm báo cáo đẹp hơn. Coverage và độ chính xác có điều kiện cần được trình bày cùng nhau.")
+    p(f'k-NN dự đoán đúng {round(R["knn_test"]["accuracy"]*R["n_test"])}/{R["n_test"]} ảnh; SVM đúng {round(R["svm_test"]["accuracy"]*R["n_test"])}/{R["n_test"]}. Cấu hình k-NN được chọn: nhóm {R["selected"]["features"]}, k={R["selected"]["k"]}. SVM được chọn bằng CV: {R.get("svm_selected", {})}. Kết quả chỉ đại diện bộ UCI và giao thức chia ảnh đang dùng.')
+    p('Độ lệch chuẩn CV mô tả biến thiên giữa folds; dữ liệu nhỏ có thể làm điểm dao động đáng kể. Hai mô hình dùng cùng fold và tập test, nhưng không thể từ một lần chia nhỏ suy ra mô hình nào tốt hơn tổng quát. Không thay đổi luật phân đoạn sau khi xem điểm test để chọn kết quả đẹp hơn.')
+    p('Với 30 ảnh test, mỗi ảnh đúng hoặc sai làm accuracy thay đổi khoảng 3,33 điểm phần trăm. Chênh lệch nhỏ không đủ khẳng định cải tiến chắc chắn. Bản v1 đã được lưu ở results/baseline_v1; pipeline v2 thay đổi đồng thời ROI, hình dạng, phân đoạn và tiền xử lý nên không quy mọi thay đổi điểm số cho riêng CLAHE.')
+    p(f'Cơ chế từ chối giữ lại {R["knn_test"]["coverage"]:.1%} ảnh; accuracy có điều kiện là {R["knn_test"]["accepted_accuracy"]}. Mẫu số của chỉ số có điều kiện khác với accuracy toàn tập. Tỷ lệ phiếu không phải xác suất đã hiệu chuẩn; chưa có tập ảnh ngoài phân phối để kiểm tra cơ chế từ chối.')
     p('Các công trình [2]–[4] có thể dùng đặc trưng, dữ liệu và split khác. Báo cáo không lấy con số công bố làm đường chuẩn trực tiếp rồi kết luận phương pháp mới tốt hơn. Muốn tái hiện cần cùng tập ảnh, preprocessing, nhãn, quy trình chọn tham số và cách tính chỉ số.')
 
     page('4 4 Khảo sát k và nhóm đặc trưng')
     table('Bảng 4 4 Macro-F1 năm fold theo cấu hình', ['Đặc trưng', 'k', 'Trung bình', 'Độ lệch chuẩn'], [
-        [{'color':'Màu 54', 'texture':'Kết cấu 16', 'all':'Toàn bộ 74'}[r['features']], r['k'],
+        [f"{r['features']} ({len(FEATURE_GROUPS[r['features']])})", r['k'],
          f"{r['macro_f1_mean']:.4f}", f"{r['macro_f1_std']:.4f}"] for r in CV if r['crop']=='rice'], [5.2,2,4.4,4.4])
-    p('Cấu hình tốt nhất trong lưới k-NN là toàn bộ 74 chiều với k=3. Khi k tăng, mô hình giảm nhạy với một láng giềng riêng lẻ nhưng có thể trộn các lớp có màu gần nhau. Kết cấu đơn lẻ thiếu thông tin màu tổn thương, nên hiệu quả không nhất thiết tăng khi bỏ màu khỏi vector.')
-    p('Đây là khảo sát trên validation trong train, không phải 12 lần đo test rồi chọn kết quả cao nhất. Cùng một bộ folds được dùng cho mọi cấu hình. Các fold có kích thước nhỏ làm độ lệch chuẩn đáng kể; kết quả lựa chọn cần xác nhận lại trên dữ liệu thu thập độc lập khi mở rộng.')
+    p(f'Cấu hình k-NN có CV cao nhất là nhóm {R["selected"]["features"]}, k={R["selected"]["k"]}, macro-F1={R["selected"]["macro_f1_mean"]:.4f}. Thêm hình dạng hoặc chuẩn hóa không mặc nhiên làm tăng điểm; kết luận phải theo bảng đo. Vector 0 cho ROI nhỏ là một giới hạn vì ảnh ít triệu chứng có thể mất thông tin phân lớp.')
+    p('Bảng này lấy điểm validation trong train. Cùng folds được dùng cho mọi cấu hình; test không dùng để chọn k. Kết quả hình dạng phản ánh mask dự đoán, chưa thể coi là hình dạng bệnh chính xác khi chưa có ground truth.')
 
     page('4 5 Ma trận nhầm lẫn và phân tích lỗi')
     figure(ROOT / 'results/rice_confusion.png', 'Hình 4 1 Ma trận nhầm lẫn k-NN trên 30 ảnh test', 14)
-    p('Hình 4 1 cho thấy ba lỗi đều được dự đoán thành bạc lá: một ảnh đốm nâu và hai ảnh leaf smut. Lớp bạc lá có recall 10/10 nhưng precision 10/13. Một lớp có recall cao không có nghĩa nhận dạng tốt về mọi mặt; cần đọc cả hàng và cột của ma trận.')
-    p('Giả thuyết kỹ thuật là một số lá có màu vàng/khô toàn cục gần nhóm bạc lá trong không gian đặc trưng. Để kiểm tra, nhóm cần mở các id sai trong predictions.csv, so vùng lá, histogram, mask và láng giềng gần nhất. Báo cáo không khẳng định nguyên nhân sinh học chỉ dựa vào vị trí ô nhầm lẫn.')
-    p('Tỷ lệ mặt nạ nghi tổn thương lớn không bảo đảm phân lớp đúng. Bộ phân lớp dùng màu và kết cấu toàn lá, nên có thể đúng nhãn dù mask tổn thương sai, hoặc ngược lại. Đánh giá phân lớp và phân đoạn phải độc lập về chỉ số, nhưng cùng truy về ảnh gốc để hiểu lan truyền sai số.')
+    p(f'Hình 4.1 biểu diễn {R["n_test"]} ảnh test; số lỗi k-NN là {R["n_test"]-round(R["knn_test"]["accuracy"]*R["n_test"])}. Cần đọc cả precision và recall từng lớp; cột processing_failed xuất hiện nếu có ảnh không tách được lá. Các id, nhãn thật và dự đoán được giữ trong predictions.csv để rà soát.')
+    p('Nguyên nhân nhầm có thể liên quan màu vùng bệnh, cấu trúc vết, diện tích ROI hoặc lỗi tách lá. Đây là các giả thuyết cần kiểm tra qua từng ảnh sai và mẫu tham chiếu gần nhất. Không khẳng định nguyên nhân sinh học chỉ từ ô nhầm lẫn.')
+    p('Phân lớp dùng màu, kết cấu của ROI tổn thương và hình dạng của các vết. Mask sai sẽ thay đổi cả đặc trưng và tỷ lệ diện tích. Cần đánh giá IoU và phân lớp độc lập, đồng thời xem các láng giềng gần nhất và thành phần khoảng cách trong tab giải thích. Đây là mô tả khoảng cách, không phải giải thích nhân quả.')
 
     page('4 6 Quan sát các bước xử lý')
     # A separate figure file keeps native evidence legible on A4.
     image = Image.open(ROOT / 'results/pipeline_examples.png')
     image.crop((0, 0, image.width, image.height//2)).save(OUT / 'examples_report.png')
     figure(OUT / 'examples_report.png', 'Hình 4 2 Ba ảnh test cùng mask lá và overlay ứng viên tổn thương', 15)
-    p('Mỗi hàng của Hình 4 2 gồm ảnh đầu vào, mask lá và vùng tô đỏ theo quy tắc Lab. Các hình lấy từ lần chạy thật trên UCI, không phải ảnh thực địa hoặc nhãn tay. Kích thước từng cột được giữ thống nhất để quan sát vùng biên và phần mô vàng/nâu.')
+    p('Mỗi hàng của Hình 4 2 gồm ảnh đầu vào, mask lá và vùng tô đỏ theo K-means a*b*. Các hình lấy từ lần chạy thật trên UCI, không phải ảnh thực địa hoặc nhãn tay. Kích thước từng cột được giữ thống nhất để quan sát vùng biên và phần mô vàng/nâu.')
     p('Cần kiểm tra mask có bỏ mất đầu lá, giữ cả nền hoặc lấp lỗ không hợp lý hay không. Overlay chỉ là dự đoán của thuật toán. Mắt người có thể nhận xét sơ bộ nhưng không thay thế phép so với ground truth độc lập. Việc chọn ảnh minh họa không được dùng thay bảng số trên toàn tập.')
 
     page('4 7 Ảnh hưởng độ sáng và thời gian')
-    stress_rows = [['Ảnh gốc', '30', f"{R['knn_test']['accuracy']:.1%}", f"{R['knn_test']['macro_f1']:.4f}", '0']]
-    for item in R['brightness_stress']:
+    stress_rows = [['Ảnh gốc', str(R['n_test']), f"{R['knn_test']['accuracy']:.1%}", f"{R['knn_test']['macro_f1']:.4f}", '0']]
+    for item in R['robustness_stress']:
         metric = item['successful_only_metrics']
-        stress_rows.append([f"Nhân RGB {item['factor']}", str(item['total']),
-                            f"{metric['accuracy']:.1%}", f"{metric['macro_f1']:.4f}", str(item['segmentation_failures'])])
-    table('Bảng 4 5 Kiểm tra stress độ sáng không huấn luyện lại', ['Điều kiện', 'n', 'Accuracy', 'Macro-F1', 'Lỗi tách lá'], stress_rows, [4,1.6,3.4,3.4,3.6])
-    p('Cả hai phép biến đổi đều làm giảm hiệu năng đáng kể. Nhân RGB 0,6 làm phần lớn ảnh dịch trong các bin V, L* và moment; nhân 1,4 còn gây cắt ngưỡng các kênh ở 255. Dù chuẩn hóa đặc trưng theo train, ảnh test đã lệch phân phối nên khoảng cách k-NN thay đổi. LBP có thể bền với biến đổi đơn điệu nhưng vector kết hợp vẫn chứa nhiều thành phần nhạy sáng.')
-    p('Các ảnh sau nhân độ sáng là biến thể tổng hợp của cùng test, không phải mẫu độc lập mới và không phải ảnh ngoài đồng. Không gộp chúng vào số ảnh tự chụp. Không có lỗi tách lá bị ném ra trong lần stress này, nhưng việc hàm trả được mask không chứng minh mask chính xác; vẫn cần ground truth để đánh giá.')
+        stress_rows.append([item['transform'], str(item['total']),
+                            f"{item['end_to_end_accuracy']:.1%}", f"{metric['macro_f1']:.4f}" if metric else "Không có", str(item['segmentation_failures'])])
+    table('Bảng 4 5 Stress độ sáng mờ và xoay với model cố định', ['Điều kiện', 'n', 'Accuracy', 'Macro-F1', 'Lỗi tách lá'], stress_rows, [4,1.6,3.4,3.4,3.6])
+    p('Bảng stress gồm thay đổi độ sáng, mờ Gaussian sigma 1 và 2, xoay 90°, 180° và 15°. Mỗi phép giữ model cố định, báo số lỗi và accuracy end-to-end trên toàn bộ ảnh. Chỉ số trên ảnh xử lý thành công được lưu riêng trong JSON. Không gộp biến thể của cùng ảnh thành mẫu độc lập.')
+    p('Các ảnh stress là biến thể tổng hợp của test, không phải ảnh tự chụp. Bản v1 có accuracy 0,900 trên ảnh gốc, 0,367 ở độ sáng 0,6 và 0,500 ở 1,4; đây là mốc lịch sử. Bảng hiện tại lấy số v2 mới đo. Thông tin bão hòa ở 255 không thể phục hồi bằng cân bằng trắng hay CLAHE.')
     p(f"Thời gian giải mã và xử lý trung bình là {R['processing_time']['mean_ms']:.1f} ± {R['processing_time']['std_ms']:.1f} ms/ảnh trên 120 ảnh. Phép đo gồm đọc ảnh, resize, phân đoạn và trích đặc trưng; không gồm thời gian người dùng, truyền ảnh và render giao diện. Đây là thời gian của máy chạy hiện tại, không phải benchmark trên điện thoại.")
-    p('Hướng cải thiện có thể gồm chuẩn hóa chiếu sáng có kiểm chứng, giảm trọng số đặc trưng độ sáng hoặc tăng cường ánh sáng chỉ trong train. Mỗi thay đổi cần khảo sát bằng validation và đánh giá lại test mới nếu đã dùng test hiện tại để thiết kế. Không tự áp dụng điều chỉnh rồi chỉ giữ lại kết quả tăng.')
+    p('Ablation tiền xử lý và luật Lab cũ dùng cùng train/CV, được lưu trong preprocessing_cv. Mặc định kỹ thuật không được chỉnh theo test. Khi có nhãn tay, so sánh K=2,3,4 và các phương án trên segtest đã khóa; chọn ngưỡng chỉ trên segval. IoU hiện tiếp tục pending khi không có dữ liệu.')
 
     page('4 8 Giao thức IoU và chuyển miền ngoài đồng')
     table('Bảng 4 6 Trạng thái dữ liệu cần bổ sung', ['Yêu cầu', 'Hiện có', 'Trạng thái'], [
@@ -519,22 +537,44 @@ def build():
         ['Thực nghiệm cây cà phê', 0 if 'coffee' not in M['crops'] else 'Có',
          'Cần nhập dữ liệu' if 'coffee' not in M['crops'] else 'Đã chạy']], [8.6,2.4,5])
     p('Cần lấy ít nhất 30 ảnh segtest độc lập với tập điều chỉnh phân đoạn. Mỗi ảnh có hai mask tay cùng kích thước gốc: phần lá nhìn thấy và vùng tổn thương. Ít nhất hai người kiểm tra một phần ảnh, thống nhất vùng mép và vùng nghi ngờ trước đánh giá. Nếu chỉ có 30 ảnh đã dùng để chỉnh ngưỡng, không gọi đó là test độc lập.')
-    p('Script đánh giá mask dùng nội suy nearest khi đưa về kích thước xử lý. IoU tổn thương tính trên toàn ảnh, vì nếu mask lá bỏ mất một vết thì đó vẫn là lỗi end-to-end. Đồng thời đo IoU lá, Dice và sai số tỷ lệ. Mask GT tổn thương ngoài GT lá bị từ chối thay vì tự sửa âm thầm.')
+    p('Bộ đánh giá từ chối mask lá GT rỗng, mask tổn thương ngoài lá và kích thước sai. Ảnh không tách được lá được ghi processing_failed, IoU/Dice bằng 0 cả khi GT tổn thương rỗng; giữ đầy đủ mẫu số. Báo riêng ảnh GT tổn thương rỗng và IoU trên nhóm có tổn thương. Mask tay phải được chuẩn hướng cùng ảnh trước khi đánh giá.')
     p('So sánh miền cần cùng mô hình và danh sách lớp cố định cho ảnh nền trơn và ảnh ngoài đồng. Báo số ảnh và phân bố lớp từng miền, macro-F1, accuracy và số lỗi tách lá. group phải theo cây/phiên; không đưa các crop của cùng lá qua hai split. Nếu một miền thiếu lớp, nêu rõ ảnh hưởng tới macro-F1 và giới hạn so sánh.')
     p('BRACOL có 1747 ảnh toàn lá và giấy phép CC BY 4.0 [10]. Cần nhập đúng metadata nhãn và giữ các mẫu cùng lá trong một nhóm. Mức độ nguồn có liên quan mask tự động; chúng không thay nhãn tay độc lập của bài toán này. Hiện mã đã hỗ trợ mô hình cà phê riêng, nhưng báo cáo không đưa số đo cà phê khi chưa chạy trên dữ liệu tương ứng.')
+
+    page('4 9 So sánh phiên bản và tiền xử lý')
+    if BASE:
+        old = BASE['crops']['rice']
+        table('Bảng 4 7 Accuracy v1 và v2 trên cùng test', ['Phiên bản','Ảnh gốc','RGB ×0,6','RGB ×1,4'], [
+            ['v1',f"{old['knn_test']['accuracy']:.1%}",
+             f"{old['brightness_stress'][0]['successful_only_metrics']['accuracy']:.1%}",
+             f"{old['brightness_stress'][1]['successful_only_metrics']['accuracy']:.1%}"],
+            ['v2',f"{R['knn_test']['accuracy']:.1%}",
+             f"{R['brightness_stress'][0]['end_to_end_accuracy']:.1%}",
+             f"{R['brightness_stress'][1]['end_to_end_accuracy']:.1%}"]], [4,4,4,4])
+    table('Bảng 4 8 Ablation train CV cố định k bằng 3', ['Phương án','Macro-F1 mean','SD'], [
+        [r['variant'],f"{r['macro_f1_mean']:.4f}",f"{r['macro_f1_std']:.4f}"]
+        for r in R['preprocessing_cv']], [8,4,4])
+    p('Ablation dùng k=3 và toàn bộ đặc trưng để giữ cùng bộ phân lớp giữa các phương án; khác với cấu hình k được chọn ở bảng test. Nếu điểm CV của tiền xử lý thấp hơn, không kết luận CLAHE giúp tăng phân lớp. So sánh v1/v2 thay đổi nhiều khối cùng lúc nên chỉ mô tả toàn hệ thống. Kết quả test này không được dùng chỉnh lại ngưỡng để chạy chọn số đẹp hơn.')
+    p('Bền độ sáng hơn và chính xác trên ảnh gốc hơn là hai tiêu chí khác nhau. Không tuyên bố v2 vượt trội chung nếu có đánh đổi. Chưa có thực địa và nhãn pixel thì chưa thể xác nhận bước chuẩn hóa hay phân cụm tạo mask bệnh đúng hơn.')
+
+    page('4 10 Đối chiếu phương pháp tách lá trên train')
+    if (ROOT/'results/leaf_methods_train.png').exists():
+        figure(ROOT/'results/leaf_methods_train.png', 'Hình 4 3 Ảnh train và các phương án mask lá', 15.5)
+    p('Minh họa chọn một ảnh train mỗi lớp; gồm hybrid, HSV, ExG+Otsu, ExG−ExR và GrabCut OpenCV. GrabCut là đối chứng thư viện, không thuộc mã NumPy lõi. Cấu hình SE 1×7 và 7×1 có trong bộ đánh giá khi có mask tay. Hình chỉ hỗ trợ quan sát định tính, không được gọi là đánh giá IoU.')
+    p('Bảng định lượng phương pháp nằm trong segmentation_comparison và lesion_comparison. Khi chưa có segtest, mọi phương án giữ pending. Khi có nhãn, thuật toán thất bại bị tính IoU/Dice bằng 0, kể cả ảnh không có vết; GT lá rỗng bị từ chối như lỗi dữ liệu. Cần phân biệt lỗi dữ liệu với lỗi thuật toán và giữ cỡ mẫu rõ ràng.')
 
     page('Chương 5 Kết luận và hướng phát triển', True)
     h('5 1 Đối chiếu mục tiêu')
     table('Bảng 5 1 Kết quả so với mục tiêu', ['Mục tiêu', 'Kết quả hoặc minh chứng', 'Đánh giá'], [
         ['Pipeline 5 chức năng', 'NumPy, mask, diện tích, đặc trưng, demo', 'Có mã thực thi'],
-        ['Kiểm chứng thuật toán', '10 phép đối chiếu đạt dung sai định trước', 'Đạt baseline'],
+        ['Kiểm chứng thuật toán', f'{len(V)} phép kiểm chứng đạt dung sai', 'Đạt baseline'],
         ['Phân lớp bệnh lúa', f"{round(R['knn_test']['accuracy']*R['n_test'])}/{R['n_test']} đúng, macro-F1 {R['knn_test']['macro_f1']:.4f}", 'Đạt trên test UCI'],
         ['Phân lớp bệnh cà phê', 'Hợp đồng dữ liệu và model riêng đã có', 'Chưa thực nghiệm'],
         ['IoU trên ≥30 ảnh tay', 'Chưa có mask segtest', 'Chưa đạt dữ liệu'],
         ['≥100 ảnh tự chụp', 'Chưa có nhật ký thực địa', 'Chưa đạt dữ liệu']], [4.7,7.5,3.8])
     p('Hệ thống đã tạo mốc thực nghiệm có thể tái lập bằng một lệnh và giao diện có thể quan sát từng bước. Thuật toán tự cài được kiểm chứng ở các phép có quy ước tương ứng. Điều này xác nhận một phần tính đúng của triển khai, không đồng nghĩa tính đúng của mọi mask hoặc khả năng chẩn đoán ngoài phân phối.')
     p('Kết quả công khai khả quan nhưng điều kiện thu ảnh có kiểm soát và cỡ test nhỏ hạn chế sức mạnh kết luận. Phép stress độ sáng bộc lộ độ nhạy rõ rệt. Trước khi dùng ngoài đồng, cần hoàn thiện dữ liệu tự chụp, thêm lớp khỏe và kiểm tra phân đoạn bằng nhãn tay độc lập.')
-    p('Giới hạn chính gồm giả định một lá, nền màu gần lá, mô hoại tử nối mép, lá cong và bệnh hỗn hợp. Khoảng cách và phiếu k-NN không phải xác suất đã hiệu chuẩn. Ngưỡng mức độ chỉ là quy ước của đồ án, chưa liên kết với thiệt hại sinh lý hoặc ngưỡng can thiệp nông học.')
+    p('Giới hạn gồm giả định một lá và cụm màu lớn nhất là mô khỏe; giả định này sai khi bệnh chiếm đa số hoặc nền lẫn màu. Có thể mất chi tiết khi giảm kích thước. Thang mức độ đang dùng quy ước diện tích, IRRI để pending vì chưa xác minh được đúng bảng chính thức. Khuyến nghị tra bảng bệnh và mức độ, tập trung theo dõi và xác nhận chuyên môn, không kê liều thuốc.')
 
     page('5 2 Hướng phát triển và kế hoạch kiểm chứng')
     p('Hướng thứ nhất là kiểm soát chuyển miền và chiếu sáng. Thu thêm ảnh theo máy, giống, địa điểm và thời điểm; tách test theo cây và phiên. So sánh đặc trưng hiện tại với chuẩn hóa ánh sáng trên train/segval, báo cả hiệu năng và tỷ lệ từ chối theo miền. Đặt lại ngưỡng mức độ dựa trên đồng thuận chuyên gia và sai số diện tích.')
@@ -569,6 +609,16 @@ def build():
         para.paragraph_format.line_spacing=1.1
     p('Các tài liệu học thuật cung cấp cơ sở phương pháp; các trang API phục vụ kiểm chứng triển khai và tái lập môi trường. Số liệu trong Chương 4 chỉ lấy từ tệp kết quả của dự án. Không sao chép chỉ số của công trình tham khảo thành kết quả của nhóm.')
 
+    page('Tài liệu bổ sung cho phiên bản v2')
+    for text in [
+        '[15] OpenCV developers, CLAHE class reference. docs.opencv.org/4.x/d6/db6/classcv_1_1CLAHE.html. Đối chiếu histogram clipping và nội suy theo lưới ô; truy cập 05/11/2026.',
+        '[16] SciPy developers, distance_transform_edt; scikit-image developers, regionprops. docs.scipy.org/doc/scipy/reference/generated/scipy.ndimage.distance_transform_edt.html; scikit-image.org/docs/stable/api/skimage.measure.html. Đối chiếu EDT, eccentricity và solidity; truy cập 05/11/2026.',
+        '[17] IRRI, Standard Evaluation System for Rice, nguồn cần xác minh. www.knowledgebank.irri.org/images/docs/rice-standard-evaluation-system.pdf. Tải trực tiếp timeout ngày 05/11/2026; không dùng bảng chưa đọc để ánh xạ điểm IRRI trong bản này.',
+        '[18] J. Parraga-Alava và cộng sự, RoCoLe, Mendeley Data, v2, 2019. DOI 10.17632/c5yvn32dzg.2. data.mendeley.com/datasets/c5yvn32dzg/2. CC BY 4.0; mới kiểm tra metadata, chưa dùng để tính kết quả.'
+    ]:
+        p(text)
+    p('Các đối chiếu của v2 dựa trên [15]–[16] và cùng quy ước biên, lượng tử hóa. Các nguồn [17]–[18] chỉ thể hiện trạng thái hoàn thiện thang nông học và dữ liệu; không được dùng làm bằng chứng đã có điểm IRRI hay đã thực nghiệm cà phê.')
+
     page('Phụ lục Hướng dẫn chạy và minh chứng', True)
     p('Liên kết repo GitHub của nhóm   [Nhóm điền URL thật sau khi tạo repo]. Mã nguồn đầy đủ và hướng dẫn chi tiết được giữ trong repo; thân báo cáo dùng giả mã để giải thích thuật toán.')
     h('A Cài đặt và tái lập')
@@ -594,11 +644,33 @@ def build():
     p('Thu ít nhất 100 ảnh thật tại ruộng hoặc vườn và xác nhận nhãn theo taxonomy. Tạo ít nhất 30 cặp mask tay độc lập cho segtest, có tập segval riêng. Nhập dữ liệu cà phê nếu giữ cả hai cây trong phạm vi thí nghiệm. Kiểm tra ảnh trùng và nhóm cây/phiên trước khi khóa test.')
     p('Chạy lại thí nghiệm, cập nhật Bảng 4 6 và kết luận mục tiêu bằng số liệu thật. Thêm phân tích sai số và so sánh miền; không để trạng thái chưa đo biến thành dấu 0 trong bảng chỉ số. Điền danh tính, liên kết repo và đóng góp. Hoàn thiện slide 15–20 trang, video thao tác thật 5–7 phút và chữ ký theo mẫu của khoa.')
     p('Các tệp báo cáo có thể cập nhật bằng scripts/build_report.py sau khi kết quả JSON thay đổi. Kiểm tra toàn bộ trang PDF sau mỗi thay đổi nội dung hoặc bảng. Tài liệu định hướng việc thực hiện và giải thích; kết quả thu thập thực địa, sự đồng thuận nhãn và quá trình nhóm phải do nhóm thực hiện và lưu minh chứng.')
+    # Resolve front-matter references from the planned page structure.
+    toc = {title: i+1 for i,title in enumerate(page_titles) if title.startswith('Chương ')}
+    toc['Tài liệu tham khảo'] = page_titles.index('Tài liệu tham khảo')+1
+    toc['Phụ lục Hướng dẫn chạy và hồ sơ nhóm'] = page_titles.index('Phụ lục Hướng dẫn chạy và minh chứng')+1
+    current_page = 1
+    for para in doc.paragraphs:
+        if any(b.get(qn('w:type')) == 'page' for b in para._p.findall('.//'+qn('w:br'))):
+            current_page += 1
+        if current_page > 5:
+            break
+        original = para.text
+        for title, number in toc.items():
+            if original.startswith(title+'   '):
+                para.text = title+'   '+str(number)
+        match = re.match(r'(Bảng|Hình) (\d\.\d)', original)
+        if match and re.search(r'\s\d+$', original):
+            key = match[0]
+            if key in locations:
+                para.text = re.sub(r'\s\d+$','   '+str(locations[key]),original)
+        if para.text != original:
+            source_md[:] = [item.replace(original,para.text) for item in source_md]
     OUT.mkdir(exist_ok=True)
     doc.save(OUT / 'BAO_CAO_BTL_LeafLab.docx')
     (OUT / 'BAO_CAO_NGUON.md').write_text('\n'.join(source_md), encoding='utf-8')
     (OUT / 'report_page_plan.json').write_text(json.dumps(page_titles, ensure_ascii=False, indent=2), encoding='utf-8')
-    print(f'Created report: {len(page_titles)} planned pages, 25 main-content pages')
+    main_pages = page_titles.index('Tài liệu tham khảo')-page_titles.index('Chương 1 Tổng quan bài toán')
+    print(f'Created report: {len(page_titles)} planned pages, {main_pages} main-content pages')
 
 
 if __name__ == '__main__':

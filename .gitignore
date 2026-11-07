@@ -1,10 +1,49 @@
+# Python environments and bytecode
 .venv/
+venv/
+env/
 __pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# Tool caches and test output
+.uv-cache/
 .pytest_cache/
+.pytest_tmp/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+.ipynb_checkpoints/
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+!.env.*.example
+.streamlit/secrets.toml
+
+# Large datasets and private field photos
 data/raw/
 data/field/
+
+# Document rendering intermediates and distribution archives
 docs/qa/
-*.zip
-.uv-cache/
-.pytest_tmp/
 docs/tmp/
+~$*
+*.zip
+
+# Local editor and operating-system files
+.idea/
+*.log
+*.tmp
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Keep small demo models, measured results and final reports versioned.

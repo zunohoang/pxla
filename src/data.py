@@ -43,7 +43,39 @@ def read_manifest(path, check_hash=True):
 
 def write_manifest(path, rows):
     """Write manifest in UTF-8 with fixed column order."""
-    with open(path, 'w', newline='', encoding='utf-8') as f:
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_suffix(path.suffix+'.tmp')
+    with open(temporary, 'w', newline='', encoding='utf-8') as f:
         writer = csv.DictWriter(f, fieldnames=FIELDS)
         writer.writeheader()
         writer.writerows(rows)
+    temporary.replace(path)
+
+
+def merge_manifest(path, incoming):
+    """Merge by ID, preserving manually edited splits/groups/masks; back up first."""
+    path = Path(path)
+    existing = []
+    if path.exists():
+        with path.open(encoding='utf-8-sig', newline='') as f:
+            existing = list(csv.DictReader(f))
+    ids = {r['id']: r for r in existing}
+    if len(ids) != len(existing):
+        raise ValueError('Existing manifest has duplicate IDs')
+    for row in incoming:
+        if row['id'] in ids:
+            if any(ids[row['id']][key] != row[key] for key in ['crop', 'label']):
+                raise ValueError('Conflicting label/crop for ID '+row['id'])
+            continue
+        existing.append(row)
+        ids[row['id']] = row
+    if path.exists():
+        counter = 1
+        backup = path.with_name(path.stem+f'.backup-{counter}.csv')
+        while backup.exists():
+            counter += 1
+            backup = path.with_name(path.stem+f'.backup-{counter}.csv')
+        backup.write_bytes(path.read_bytes())
+    write_manifest(path, existing)
+    return len(existing)

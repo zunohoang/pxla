@@ -13,6 +13,10 @@ from skimage.feature import graycomatrix, graycoprops
 from src.algorithms import (glcm, glcm_properties, kmeans, lbp8, morphology,
                             rgb_to_hsv, rgb_to_lab)
 from src.model import KNN
+from src.algorithms import (clahe, gray_world, lab_to_rgb, region_shape,
+                            distance_transform, otsu, components, fill_holes, median_filter)
+from scipy.ndimage import distance_transform_edt, binary_fill_holes, label
+from skimage.measure import regionprops
 
 
 def verify():
@@ -62,6 +66,37 @@ def verify():
     small = np.array([[6, 4, 8], [2, 5, 7], [9, 5, 1]], 'uint8')
     expected = sum((int(v) >= 5) << i for i, v in enumerate([7, 8, 4, 6, 2, 9, 5, 1]))
     record('LBP hand example', [lbp8(small)[1, 1]], [expected], 0)
+    light = rng.integers(0, 256, (64, 64), dtype=np.uint8)
+    record('CLAHE OpenCV same 8x8 tiles clip2', clahe(light),
+           cv2.createCLAHE(clipLimit=2., tileGridSize=(8,8)).apply(light), 1.)
+    unequal = rng.integers(0,256,(64,70),dtype=np.uint8)
+    record('CLAHE padded rectangle', clahe(unequal),
+           cv2.createCLAHE(clipLimit=2.,tileGridSize=(8,8)).apply(unequal), 1.)
+    record('Lab inverse roundtrip', lab_to_rgb(rgb_to_lab(rgb)), rgb, 1.)
+    record('Median RGB reflect', median_filter(rgb),
+           cv2.medianBlur(np.pad(rgb, ((1,1),(1,1),(0,0)), mode='reflect'), 3)[1:-1,1:-1], 0.)
+    record('Gray world hand', gray_world(np.full((8,8,3), [60,100,140], np.uint8)),
+           np.full((8,8,3), 100), 0.)
+    for dy, dx, angle in [(1,0,np.pi/2), (-1,1,-np.pi/4)]:
+        reference = graycomatrix(quant.astype('uint8'), [1], [angle], levels=16,
+                                symmetric=True, normed=True)[:,:,0,0]
+        record(f'GLCM signed {dy},{dx}', glcm(gray,np.ones(gray.shape,bool),dy,dx), reference, 1e-14)
+    shape = np.zeros((24,24), bool)
+    shape[3:18,5:9] = True
+    shape[14:18,5:20] = True
+    ours_ecc, ours_solidity = region_shape(shape)
+    props = regionprops(shape.astype(int))[0]
+    record('Region eccentricity solidity', [ours_ecc,ours_solidity],
+           [props.eccentricity,props.solidity], 1e-10)
+    padded = np.pad(shape,1)
+    record('Euclidean distance transform', distance_transform(shape),
+           distance_transform_edt(padded)[1:-1,1:-1], 1e-10)
+    holes = shape.copy()
+    holes[5:8,6:8] = False
+    record('Fill holes', fill_holes(holes), binary_fill_holes(holes), 0)
+    record('Connected components count', [len(components(shape)[1])-1], [label(shape)[1]], 0)
+    from skimage.filters import threshold_otsu
+    record('Otsu uint8', [otsu(light)], [threshold_otsu(light)], 0)
     return comparisons
 
 

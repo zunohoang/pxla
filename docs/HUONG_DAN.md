@@ -20,9 +20,9 @@ Dùng lệnh trong README. Nếu PowerShell chặn activate, gọi trực tiếp
 
 1. Ảnh RGB có hướng EXIF được chuẩn hóa, cạnh dài tối đa 256 px, giữ tỉ lệ khung.
 2. ExG chọn vùng xanh; HSV mở rộng sang vàng/nâu. Mở/đóng giảm nhiễu; chọn thành phần nối với nhiều seed xanh nhất; lấp lỗ bảo toàn vết bệnh trong lá.
-3. Chuyển Lab; K-means chỉ nhận pixel trong lá. Cụm được chọn theo tọa độ tâm màu, không theo số thứ tự cụm.
+3. Stage 0 tạo ảnh gray-world + CLAHE L* và mask chói; có thể bật median. Mask lá vẫn lấy từ RGB gốc để giữ cùng mẫu số khi so tiền xử lý. K-means dùng a*b* của pixel lá không chói: giả định cụm đông nhất là khỏe, chọn cụm xa nhất nếu khoảng cách đạt ngưỡng. Giả định này có thể sai khi bệnh chiếm đa số; ngưỡng mặc định chưa hiệu chuẩn bằng mask tay.
 4. Tính `lesion.sum()/leaf.sum()`. Tử số phải là tập con mẫu số.
-5. Trích 74 đặc trưng; chuẩn hóa bằng trung bình/độ lệch chuẩn tập train; phân lớp k-NN. Không dùng đặc trưng test khi fit scaler.
+5. Trích 135 đặc trưng ROI và hình dạng; chuẩn hóa bằng trung bình/độ lệch chuẩn tập train; phân lớp k-NN. Không dùng đặc trưng test khi fit scaler.
 6. Nếu khoảng cách lớn hoặc thiếu đồng thuận, demo trả “Chưa đủ bằng chứng”. Tỉ lệ phiếu không được gọi là xác suất bệnh.
 
 ## Bước 4 · Thu thập và gán nhãn
@@ -35,9 +35,9 @@ Thực hiện `data/README.md`. Đặt tên cây và phiên chụp trước khi 
 
 **So sánh phương pháp:** k-NN NumPy và SVM RBF thư viện trên cùng train/test; CV chỉ nằm trong train. Báo cáo danh sách lớp, confusion matrix, accuracy, macro-F1. Không so sánh điểm tuyệt đối với bài báo dùng dữ liệu khác để xếp hạng.
 
-**Khảo sát tham số:** k=1,3,5,7 và 3 tập đặc trưng màu/kết cấu/toàn bộ, lấy trung bình ± độ lệch chuẩn CV. Macro-F1 CV dùng chọn cấu hình; test chỉ dùng đánh giá cuối. K=3 phân đoạn là mặc định cố định; nếu khảo sát K=2,3,4,5, phải chọn bằng segval, không bằng segtest.
+**Khảo sát tham số:** k=1,3,5,7 và 4 tập đặc trưng color/texture/shape/all; SVM khảo sát C, gamma và PCA trong từng fold. Lấy trung bình ± độ lệch chuẩn CV để chọn cấu hình; test chỉ dùng đánh giá cuối. K=3 phân đoạn là mặc định kỹ thuật; khi có mask, so K=2,3,4 nhưng chọn bằng segval, không bằng segtest.
 
-**Điều kiện bất lợi:** test nền trơn, test ngoài đồng; ảnh test nhân độ sáng 0,6 và 1,4 chỉ là kiểm tra stress tổng hợp. Không ghi các biến thể này là ảnh thực địa. Giữ số thất bại tách lá trong báo cáo; accuracy trên ảnh thành công phải ghi rõ mẫu số.
+**Điều kiện bất lợi:** test nền trơn, test ngoài đồng; stress độ sáng 0,6/1,4, mờ Gaussian 1/2, xoay 90°/180°/15°. Đây là biến thể tổng hợp, không phải ảnh thực địa. Giữ số thất bại tách lá trong báo cáo; accuracy trên ảnh thành công phải ghi rõ mẫu số.
 
 ## Bước 6 · Đọc và viết phân tích
 

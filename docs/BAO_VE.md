@@ -12,7 +12,7 @@
 8. Mở/đóng, thành phần liên thông, lấp lỗ (35 giây).
 9. Lab và K-means; không gán ý nghĩa bệnh cho cluster ID (45 giây).
 10. Tỉ lệ diện tích, ví dụ 120/1000=12%, quy ước mức độ (35 giây).
-11. Histogram, Lab, LBP vuông và GLCM có mask (45 giây).
+11. 135 đặc trưng ROI: màu, LBP bán kính 1/2, GLCM bốn hướng và hình dạng (45 giây).
 12. Chuẩn hóa train-only, k-NN, SVM đối chiếu, từ chối (40 giây).
 13. Bảng kiểm chứng max error/MSE của thuật toán tự viết (35 giây).
 14. So sánh k-NN/SVM và ma trận nhầm lẫn từ lần chạy thật (55 giây).
@@ -41,7 +41,7 @@ Tổng khoảng 12 phút. Cập nhật slide 4, 14, 15, 16 sau lần chạy cu�
 
 **Tại sao không chỉ ngưỡng xanh?** Ngưỡng xanh có thể loại bỏ mô lá bị vàng/nâu, làm sai cả tử và mẫu của tỉ lệ diện tích. HSV mở rộng và lấp lỗ giảm một phần lỗi nhưng không khôi phục mô bị mất ở rìa.
 
-**LBP này có giống skimage không?** Không hoàn toàn. Dự án dùng 8 điểm vuông 3×3, còn LBP tròn dùng nội suy ở điểm chéo; vì vậy kiểm chứng LBP bằng định nghĩa/ví dụ tay và đối chiếu các phần có cùng quy ước.
+**LBP này có giống skimage không?** Không hoàn toàn. Dự án dùng 8 điểm trên lân cận vuông, bán kính 1 và 2; LBP tròn dùng nội suy ở điểm chéo. Kiểm chứng LBP bằng định nghĩa và ví dụ tay, chỉ so thư viện khi cùng quy ước.
 
 **Vì sao phải mask GLCM cả hai đầu pixel?** Nếu chỉ mask điểm đầu, cặp kết cấu có thể chứa nền và làm đặc trưng phụ thuộc nền.
 

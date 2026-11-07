@@ -68,5 +68,89 @@
     "mse": 0.0,
     "tolerance": 0,
     "passed": true
+  },
+  {
+    "name": "CLAHE OpenCV same 8x8 tiles clip2",
+    "max_abs": 0.0,
+    "mse": 0.0,
+    "tolerance": 1.0,
+    "passed": true
+  },
+  {
+    "name": "CLAHE padded rectangle",
+    "max_abs": 1.0,
+    "mse": 0.0017857142857142857,
+    "tolerance": 1.0,
+    "passed": true
+  },
+  {
+    "name": "Lab inverse roundtrip",
+    "max_abs": 0.0,
+    "mse": 0.0,
+    "tolerance": 1.0,
+    "passed": true
+  },
+  {
+    "name": "Median RGB reflect",
+    "max_abs": 0.0,
+    "mse": 0.0,
+    "tolerance": 0.0,
+    "passed": true
+  },
+  {
+    "name": "Gray world hand",
+    "max_abs": 0.0,
+    "mse": 0.0,
+    "tolerance": 0.0,
+    "passed": true
+  },
+  {
+    "name": "GLCM signed 1,0",
+    "max_abs": 0.0,
+    "mse": 0.0,
+    "tolerance": 1e-14,
+    "passed": true
+  },
+  {
+    "name": "GLCM signed -1,1",
+    "max_abs": 0.0,
+    "mse": 0.0,
+    "tolerance": 1e-14,
+    "passed": true
+  },
+  {
+    "name": "Region eccentricity solidity",
+    "max_abs": 1.1102230246251565e-16,
+    "mse": 6.162975822039155e-33,
+    "tolerance": 1e-10,
+    "passed": true
+  },
+  {
+    "name": "Euclidean distance transform",
+    "max_abs": 0.0,
+    "mse": 0.0,
+    "tolerance": 1e-10,
+    "passed": true
+  },
+  {
+    "name": "Fill holes",
+    "max_abs": 0.0,
+    "mse": 0.0,
+    "tolerance": 0,
+    "passed": true
+  },
+  {
+    "name": "Connected components count",
+    "max_abs": 0.0,
+    "mse": 0.0,
+    "tolerance": 0,
+    "passed": true
+  },
+  {
+    "name": "Otsu uint8",
+    "max_abs": 0.0,
+    "mse": 0.0,
+    "tolerance": 0,
+    "passed": true
   }
 ]

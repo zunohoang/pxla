@@ -18,3 +18,11 @@ Các URL được tra cứu ngày 05/11/2026. Bài báo dùng làm nguồn ý t�
 14. NASA Space Apps, [Field Shift 2026](https://www.spaceappschallenge.org/2026/challenges/field-shift-adapting-farms-with-nasa-data/). Bối cảnh ứng dụng, không phải nguồn nhãn bệnh lá của thực nghiệm.
 
 Không mặc định PlantVillage có lúa/cà phê. Danh sách crop–disease trong bài [8] cần kiểm tra trước khi chọn dữ liệu. Không gắn nhãn NASA cho ảnh UCI/BRACOL.
+
+
+15. OpenCV, [CLAHE API](https://docs.opencv.org/4.x/d6/db6/classcv_1_1CLAHE.html). Đối chiếu CLAHE cùng thang clip-limit, lưới ô và quy tắc đệm; dung sai 1 mức xám do làm tròn.
+16. SciPy, [distance_transform_edt](https://docs.scipy.org/doc/scipy/reference/generated/scipy.ndimage.distance_transform_edt.html); scikit-image, [regionprops](https://scikit-image.org/docs/stable/api/skimage.measure.html#skimage.measure.regionprops). Đối chiếu EDT, eccentricity và solidity.
+17. IRRI, [Standard Evaluation System for Rice](https://www.knowledgebank.irri.org/images/docs/rice-standard-evaluation-system.pdf). Nguồn sơ cấp cần kiểm tra; truy cập trực tiếp và tải PDF đều timeout trong phiên này. Không chép thang từ snippet có hàng bị lệch, không triển khai điểm IRRI khi chưa xác minh trang bảng/bệnh/ấn bản.
+18. J. Parraga-Alava et al., [RoCoLe v2](https://data.mendeley.com/datasets/c5yvn32dzg/2), 2019, DOI 10.17632/c5yvn32dzg.2, CC BY 4.0. Đã kiểm tra trang metadata, chưa dùng trong thực nghiệm hiện tại.
+
+Khuyến nghị trong app là bảng hướng dẫn quan sát và xác nhận chuyên môn do đồ án biên soạn, chưa phải phác đồ BVTV được cơ quan chuyên môn phê duyệt. Không có liều thuốc hoặc ngưỡng can thiệp kinh tế được suy từ ảnh.

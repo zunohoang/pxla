@@ -10,7 +10,7 @@ def main():
     selected = []
     for name in ['README.md', 'START_DEMO.bat', 'app.py', 'run_experiments.py',
                  'requirements.txt', 'requirements-lock.txt', 'requirements-docs.txt',
-                 'pytest.ini', '.gitignore']:
+                 'pytest.ini', '.gitignore', '.gitattributes']:
         selected.append(ROOT / name)
     for folder in ['src', 'scripts', 'tests', 'models', 'results', 'data', 'docs']:
         for path in (ROOT / folder).rglob('*'):

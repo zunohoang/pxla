@@ -10,7 +10,7 @@ import zipfile
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from src.data import write_manifest
+from src.data import merge_manifest
 
 URL = 'https://archive.ics.uci.edu/static/public/486/rice+leaf+diseases.zip'
 SOURCE = 'https://doi.org/10.24432/C5R013'
@@ -48,13 +48,13 @@ def main():
             raise ValueError(f'Expected 40 images of {label}, found {len(subset)}')
         for idx in rng.permutation(len(subset))[:10]:
             subset[idx]['split'] = 'test'
-    write_manifest('data/manifest.csv', rows)
+    total = merge_manifest('data/manifest.csv', rows)
     Path('data/rice_provenance.json').write_text(json.dumps(dict(
         url=URL, sha256=hashlib.sha256(blob).hexdigest(), images=len(rows),
         seed=42, train=90, test=30,
         group_limitation='UCI has no plant/session IDs; image IDs are proxies. '
         'Manual near-duplicate and acquisition audit required.'), indent=2), encoding='utf-8')
-    print(f'Downloaded {len(rows)} images. No healthy class. No field photos or lesion GT.')
+    print(f'Downloaded {len(rows)} images; merged {total} manifest rows, preserving existing annotations/splits.')
 
 
 if __name__ == '__main__':

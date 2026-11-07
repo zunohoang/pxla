@@ -1,4 +1,12 @@
 {
+  "schema": "leaflab-2",
+  "feature_dim": 135,
+  "feature_groups": {
+    "color": 102,
+    "texture": 26,
+    "shape": 7,
+    "all": 135
+  },
   "seed": 42,
   "config": {
     "max_side": 256,
@@ -8,7 +16,20 @@
     "saturation": 0.15,
     "lesion_a": -3.0,
     "lesion_b": 8.0,
-    "dark_l": 30.0
+    "dark_l": 30.0,
+    "preprocessing": true,
+    "white_balance": true,
+    "clahe_clip": 2.0,
+    "clahe_tiles": 8,
+    "median": false,
+    "exclude_glare": true,
+    "leaf_method": "hybrid",
+    "morph_height": 3,
+    "morph_width": 3,
+    "lesion_method": "ab_distance",
+    "lesion_min_distance": 8.0,
+    "min_lesion_pixels": 3,
+    "lesion_close": false
   },
   "crops": {
     "rice": {
@@ -22,37 +43,37 @@
       "selected": {
         "crop": "rice",
         "method": "knn",
-        "features": "all",
-        "k": 3,
-        "macro_f1_mean": 0.8143667443667445,
-        "macro_f1_std": 0.1456130925534728,
+        "features": "color",
+        "k": 1,
+        "macro_f1_mean": 0.6723868723868724,
+        "macro_f1_std": 0.04621379309526767,
         "fold_scores": [
-          1.0,
-          0.7111111111111111,
-          0.6944444444444445,
-          0.9440559440559441,
-          0.7222222222222222
+          0.6748251748251749,
+          0.6141636141636142,
+          0.7117327117327118,
+          0.7222222222222222,
+          0.6389906389906389
         ]
       },
       "knn_test": {
         "n": 30,
-        "accuracy": 0.9,
-        "macro_f1": 0.901940842444275,
+        "accuracy": 0.6333333333333333,
+        "macro_f1": 0.6283891547049442,
         "confusion": [
           [
-            10,
-            0,
-            0
+            8,
+            1,
+            1
+          ],
+          [
+            3,
+            5,
+            2
           ],
           [
             1,
-            9,
-            0
-          ],
-          [
-            2,
-            0,
-            8
+            3,
+            6
           ]
         ],
         "labels": [
@@ -65,28 +86,28 @@
           "brown_spot",
           "leaf_smut"
         ],
-        "coverage": 0.9333333333333333,
-        "accepted_accuracy": 0.9642857142857143
+        "coverage": 0.9666666666666667,
+        "accepted_accuracy": 0.6551724137931034
       },
       "svm_test": {
         "n": 30,
-        "accuracy": 0.9,
-        "macro_f1": 0.8994708994708995,
+        "accuracy": 0.5666666666666667,
+        "macro_f1": 0.5783006535947712,
         "confusion": [
           [
-            9,
-            0,
-            1
-          ],
-          [
-            2,
-            8,
+            6,
+            4,
             0
           ],
           [
+            2,
+            6,
+            2
+          ],
+          [
             0,
-            0,
-            10
+            5,
+            5
           ]
         ],
         "labels": [
@@ -101,28 +122,33 @@
         ]
       },
       "test_processing_failures": [],
-      "svm_cv_mean": 0.8550597115302997,
-      "svm_cv_std": 0.18394420792219635,
+      "svm_selected": {
+        "pca": "PCA(n_components=0.95, svd_solver='full')",
+        "svc__C": "0.1",
+        "svc__gamma": "scale"
+      },
+      "svm_cv_mean": 0.7018159618159617,
+      "svm_cv_std": 0.08658936583442021,
       "domains": {
         "plain": {
           "n": 30,
-          "accuracy": 0.9,
-          "macro_f1": 0.901940842444275,
+          "accuracy": 0.6333333333333333,
+          "macro_f1": 0.6283891547049442,
           "confusion": [
             [
-              10,
-              0,
-              0
+              8,
+              1,
+              1
+            ],
+            [
+              3,
+              5,
+              2
             ],
             [
               1,
-              9,
-              0
-            ],
-            [
-              2,
-              0,
-              8
+              3,
+              6
             ]
           ],
           "labels": [
@@ -143,23 +169,339 @@
       },
       "brightness_stress": [
         {
+          "transform": "brightness_0.6",
           "factor": 0.6,
+          "end_to_end_accuracy": 0.4,
           "segmentation_failures": 0,
           "total": 30,
           "successful_only_metrics": {
             "n": 30,
-            "accuracy": 0.36666666666666664,
-            "macro_f1": 0.24123588829471185,
+            "accuracy": 0.4,
+            "macro_f1": 0.3992063492063492,
             "confusion": [
               [
-                1,
+                5,
                 0,
-                9
+                5
               ],
+              [
+                5,
+                3,
+                2
+              ],
+              [
+                4,
+                2,
+                4
+              ]
+            ],
+            "labels": [
+              "bacterial_leaf_blight",
+              "brown_spot",
+              "leaf_smut"
+            ],
+            "prediction_labels": [
+              "bacterial_leaf_blight",
+              "brown_spot",
+              "leaf_smut"
+            ]
+          }
+        },
+        {
+          "transform": "brightness_1.4",
+          "factor": 1.4,
+          "end_to_end_accuracy": 0.5,
+          "segmentation_failures": 0,
+          "total": 30,
+          "successful_only_metrics": {
+            "n": 30,
+            "accuracy": 0.5,
+            "macro_f1": 0.49444444444444446,
+            "confusion": [
+              [
+                7,
+                3,
+                0
+              ],
+              [
+                3,
+                5,
+                2
+              ],
+              [
+                1,
+                6,
+                3
+              ]
+            ],
+            "labels": [
+              "bacterial_leaf_blight",
+              "brown_spot",
+              "leaf_smut"
+            ],
+            "prediction_labels": [
+              "bacterial_leaf_blight",
+              "brown_spot",
+              "leaf_smut"
+            ]
+          }
+        }
+      ],
+      "robustness_stress": [
+        {
+          "transform": "brightness_0.6",
+          "factor": 0.6,
+          "end_to_end_accuracy": 0.4,
+          "segmentation_failures": 0,
+          "total": 30,
+          "successful_only_metrics": {
+            "n": 30,
+            "accuracy": 0.4,
+            "macro_f1": 0.3992063492063492,
+            "confusion": [
+              [
+                5,
+                0,
+                5
+              ],
+              [
+                5,
+                3,
+                2
+              ],
+              [
+                4,
+                2,
+                4
+              ]
+            ],
+            "labels": [
+              "bacterial_leaf_blight",
+              "brown_spot",
+              "leaf_smut"
+            ],
+            "prediction_labels": [
+              "bacterial_leaf_blight",
+              "brown_spot",
+              "leaf_smut"
+            ]
+          }
+        },
+        {
+          "transform": "brightness_1.4",
+          "factor": 1.4,
+          "end_to_end_accuracy": 0.5,
+          "segmentation_failures": 0,
+          "total": 30,
+          "successful_only_metrics": {
+            "n": 30,
+            "accuracy": 0.5,
+            "macro_f1": 0.49444444444444446,
+            "confusion": [
+              [
+                7,
+                3,
+                0
+              ],
+              [
+                3,
+                5,
+                2
+              ],
+              [
+                1,
+                6,
+                3
+              ]
+            ],
+            "labels": [
+              "bacterial_leaf_blight",
+              "brown_spot",
+              "leaf_smut"
+            ],
+            "prediction_labels": [
+              "bacterial_leaf_blight",
+              "brown_spot",
+              "leaf_smut"
+            ]
+          }
+        },
+        {
+          "transform": "blur_sigma_1",
+          "factor": null,
+          "end_to_end_accuracy": 0.6333333333333333,
+          "segmentation_failures": 0,
+          "total": 30,
+          "successful_only_metrics": {
+            "n": 30,
+            "accuracy": 0.6333333333333333,
+            "macro_f1": 0.6345029239766081,
+            "confusion": [
+              [
+                7,
+                2,
+                1
+              ],
+              [
+                2,
+                5,
+                3
+              ],
+              [
+                0,
+                3,
+                7
+              ]
+            ],
+            "labels": [
+              "bacterial_leaf_blight",
+              "brown_spot",
+              "leaf_smut"
+            ],
+            "prediction_labels": [
+              "bacterial_leaf_blight",
+              "brown_spot",
+              "leaf_smut"
+            ]
+          }
+        },
+        {
+          "transform": "blur_sigma_2",
+          "factor": null,
+          "end_to_end_accuracy": 0.43333333333333335,
+          "segmentation_failures": 0,
+          "total": 30,
+          "successful_only_metrics": {
+            "n": 30,
+            "accuracy": 0.43333333333333335,
+            "macro_f1": 0.42287581699346405,
+            "confusion": [
+              [
+                4,
+                3,
+                3
+              ],
+              [
+                1,
+                7,
+                2
+              ],
+              [
+                0,
+                8,
+                2
+              ]
+            ],
+            "labels": [
+              "bacterial_leaf_blight",
+              "brown_spot",
+              "leaf_smut"
+            ],
+            "prediction_labels": [
+              "bacterial_leaf_blight",
+              "brown_spot",
+              "leaf_smut"
+            ]
+          }
+        },
+        {
+          "transform": "rotate_90",
+          "factor": null,
+          "end_to_end_accuracy": 0.6333333333333333,
+          "segmentation_failures": 0,
+          "total": 30,
+          "successful_only_metrics": {
+            "n": 30,
+            "accuracy": 0.6333333333333333,
+            "macro_f1": 0.6283891547049442,
+            "confusion": [
+              [
+                8,
+                1,
+                1
+              ],
+              [
+                3,
+                5,
+                2
+              ],
+              [
+                1,
+                3,
+                6
+              ]
+            ],
+            "labels": [
+              "bacterial_leaf_blight",
+              "brown_spot",
+              "leaf_smut"
+            ],
+            "prediction_labels": [
+              "bacterial_leaf_blight",
+              "brown_spot",
+              "leaf_smut"
+            ]
+          }
+        },
+        {
+          "transform": "rotate_180",
+          "factor": null,
+          "end_to_end_accuracy": 0.6666666666666666,
+          "segmentation_failures": 0,
+          "total": 30,
+          "successful_only_metrics": {
+            "n": 30,
+            "accuracy": 0.6666666666666666,
+            "macro_f1": 0.65,
+            "confusion": [
+              [
+                9,
+                0,
+                1
+              ],
+              [
+                4,
+                4,
+                2
+              ],
+              [
+                1,
+                2,
+                7
+              ]
+            ],
+            "labels": [
+              "bacterial_leaf_blight",
+              "brown_spot",
+              "leaf_smut"
+            ],
+            "prediction_labels": [
+              "bacterial_leaf_blight",
+              "brown_spot",
+              "leaf_smut"
+            ]
+          }
+        },
+        {
+          "transform": "rotate_15",
+          "factor": null,
+          "end_to_end_accuracy": 0.5666666666666667,
+          "segmentation_failures": 0,
+          "total": 30,
+          "successful_only_metrics": {
+            "n": 30,
+            "accuracy": 0.5666666666666667,
+            "macro_f1": 0.49788204626914306,
+            "confusion": [
               [
                 6,
                 0,
                 4
+              ],
+              [
+                2,
+                1,
+                7
               ],
               [
                 0,
@@ -178,49 +520,50 @@
               "leaf_smut"
             ]
           }
-        },
-        {
-          "factor": 1.4,
-          "segmentation_failures": 0,
-          "total": 30,
-          "successful_only_metrics": {
-            "n": 30,
-            "accuracy": 0.5,
-            "macro_f1": 0.45004668534080294,
-            "confusion": [
-              [
-                3,
-                7,
-                0
-              ],
-              [
-                0,
-                10,
-                0
-              ],
-              [
-                1,
-                7,
-                2
-              ]
-            ],
-            "labels": [
-              "bacterial_leaf_blight",
-              "brown_spot",
-              "leaf_smut"
-            ],
-            "prediction_labels": [
-              "bacterial_leaf_blight",
-              "brown_spot",
-              "leaf_smut"
-            ]
-          }
         }
       ],
       "processing_time": {
-        "mean_ms": 128.99742166725142,
-        "std_ms": 39.313952567799994
-      }
+        "mean_ms": 540.0554683333212,
+        "std_ms": 156.96981891656898
+      },
+      "preprocessing_cv": [
+        {
+          "variant": "without_preprocessing",
+          "macro_f1_mean": 0.6492840492840493,
+          "macro_f1_std": 0.1283346645239343,
+          "fold_scores": [
+            0.7666666666666666,
+            0.7746031746031745,
+            0.6647241647241647,
+            0.48253968253968255,
+            0.5578865578865578
+          ]
+        },
+        {
+          "variant": "with_preprocessing",
+          "macro_f1_mean": 0.6006793206793206,
+          "macro_f1_std": 0.1528274211224214,
+          "fold_scores": [
+            0.6147186147186147,
+            0.5411255411255411,
+            0.764102564102564,
+            0.709090909090909,
+            0.37435897435897436
+          ]
+        },
+        {
+          "variant": "lab_rule_baseline",
+          "macro_f1_mean": 0.6670951270951271,
+          "macro_f1_std": 0.10107106180656686,
+          "fold_scores": [
+            0.7128205128205128,
+            0.70995670995671,
+            0.7666666666666667,
+            0.5047619047619047,
+            0.6412698412698412
+          ]
+        }
+      ]
     }
   },
   "field_photos": 0,
@@ -232,7 +575,110 @@
     "n": 0,
     "required": 30,
     "status": "pending",
+    "failures": 0,
     "records": []
+  },
+  "segmentation_comparison": {
+    "hybrid": {
+      "n": 0,
+      "required": 30,
+      "status": "pending",
+      "failures": 0,
+      "records": []
+    },
+    "hsv": {
+      "n": 0,
+      "required": 30,
+      "status": "pending",
+      "failures": 0,
+      "records": []
+    },
+    "exg_otsu": {
+      "n": 0,
+      "required": 30,
+      "status": "pending",
+      "failures": 0,
+      "records": []
+    },
+    "exg_exr": {
+      "n": 0,
+      "required": 30,
+      "status": "pending",
+      "failures": 0,
+      "records": []
+    },
+    "hybrid_se1x7": {
+      "n": 0,
+      "required": 30,
+      "status": "pending",
+      "failures": 0,
+      "records": []
+    },
+    "hybrid_se7x1": {
+      "n": 0,
+      "required": 30,
+      "status": "pending",
+      "failures": 0,
+      "records": []
+    },
+    "grabcut_reference": {
+      "n": 0,
+      "required": 30,
+      "status": "pending",
+      "failures": 0,
+      "records": []
+    }
+  },
+  "lesion_comparison": {
+    "ab_distance_k2": {
+      "n": 0,
+      "required": 30,
+      "status": "pending",
+      "failures": 0,
+      "records": []
+    },
+    "ab_distance_k3": {
+      "n": 0,
+      "required": 30,
+      "status": "pending",
+      "failures": 0,
+      "records": []
+    },
+    "ab_distance_k4": {
+      "n": 0,
+      "required": 30,
+      "status": "pending",
+      "failures": 0,
+      "records": []
+    },
+    "lab_rule_k2": {
+      "n": 0,
+      "required": 30,
+      "status": "pending",
+      "failures": 0,
+      "records": []
+    },
+    "lab_rule_k3": {
+      "n": 0,
+      "required": 30,
+      "status": "pending",
+      "failures": 0,
+      "records": []
+    },
+    "lab_rule_k4": {
+      "n": 0,
+      "required": 30,
+      "status": "pending",
+      "failures": 0,
+      "records": []
+    },
+    "otsu_a_k2": {
+      "n": 0,
+      "required": 30,
+      "status": "pending",
+      "failures": 0,
+      "records": []
+    }
   },
   "field_requirement": "pending"
 }

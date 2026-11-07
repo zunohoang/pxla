@@ -37,3 +37,16 @@ python scripts/convert_annotations.py data/annotations/anh01.json --out data/mas
 `id` duy nhất; `path` tính từ thư mục gốc; `crop` là rice/coffee; `label` là nhãn đã kiểm tra; `domain` plain/field; `group` định danh lần thu thập; `split` train/test/segval/segtest. Kiểm tra ảnh trùng byte bằng SHA256 đã tự động hóa. Ảnh gần trùng phải rà soát thủ công; đổi tên hay nén JPEG không làm chúng thành mẫu độc lập.
 
 Phiên bản PlantVillage phổ biến không có lúa/cà phê. Chỉ chọn dữ liệu khi danh sách loài và bệnh phù hợp. Trang NASA Field Shift cung cấp bối cảnh và dữ liệu quan sát Trái Đất; không coi ảnh vệ tinh là nhãn bệnh pixel của lá chụp điện thoại.
+
+
+## Cập nhật v2
+
+Script tải UCI giữ các dòng đã có và chỉ thêm ID còn thiếu; CSV được sao lưu trước khi ghi. Script import cũng gộp an toàn, không ghi đè group/split/mask thủ công. Đối với ảnh field, chuẩn bị `data/group_map_template.csv` với id,group,split thật rồi chạy:
+
+```powershell
+python scripts/import_folders.py data/field/rice --crop rice --domain field --source self --license own --group-map data/field_groups.csv --out data/manifest.csv
+```
+
+Có thể đặt thẻ xám ở mép khung trong một ảnh tham chiếu mỗi phiên để kiểm tra chiếu sáng; ảnh phân tích chính vẫn cần một lá rõ, không bị vật tham chiếu che. Ghi ID lá, cây, máy và phiên; không tự sinh ID cây để thay bằng chứng thu thập. Thu thêm lá khỏe có người xác nhận. Mask lá gán tay phải không rỗng; mask tổn thương được rỗng với lá không có vết.
+
+Nguồn cà phê bổ sung: [RoCoLe v2](https://data.mendeley.com/datasets/c5yvn32dzg/2), 1560 ảnh robusta, CC BY 4.0, DOI 10.17632/c5yvn32dzg.2. Nhãn nguồn gồm khỏe/bệnh và mức độ; không tự chuyển nhãn bệnh tổng quát thành tác nhân cụ thể nếu metadata không xác nhận. Pipeline chưa tải hoặc huấn luyện trên RoCoLe/BRACOL trong lần chạy này.

@@ -10,6 +10,7 @@ from src.data import FIELDS, read_manifest
 from src.evaluation import classification, overlap
 from src.model import KNN
 from src.pipeline import Config, process
+from src.features import FEATURE_DIM
 
 
 def test_components_and_holes():
@@ -57,7 +58,7 @@ def test_pipeline_synthetic_not_real_disease():
     rgb[12:84, 25:71] = [50, 150, 45]
     rgb[35:50, 40:55] = [155, 85, 25]
     out = process(rgb)
-    assert len(out['features']) == 74 and np.isfinite(out['features']).all()
+    assert len(out['features']) == FEATURE_DIM and np.isfinite(out['features']).all()
     assert 0 < out['ratio'] < 1
     assert not (out['lesion'] & ~out['leaf']).any()
     with pytest.raises(ValueError):
