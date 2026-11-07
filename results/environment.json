@@ -1,0 +1,14 @@
+{
+  "os": "Windows-11-10.0.26300-SP0",
+  "processor": "AMD64 Family 25 Model 68 Stepping 1, AuthenticAMD",
+  "python": "3.14.7",
+  "packages": {
+    "numpy": "2.5.4",
+    "Pillow": "12.3.0",
+    "opencv-python-headless": "4.14.0.94",
+    "scikit-image": "0.26.0",
+    "scikit-learn": "1.8.0",
+    "streamlit": "1.66.1",
+    "matplotlib": "3.11.2"
+  }
+}
