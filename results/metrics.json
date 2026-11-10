@@ -32,6 +32,829 @@
     "lesion_close": false
   },
   "crops": {
+    "coffee": {
+      "n_train": 1007,
+      "n_test": 335,
+      "labels": [
+        "brown_spot",
+        "cercospora",
+        "healthy",
+        "leaf_miner",
+        "rust"
+      ],
+      "selected": {
+        "crop": "coffee",
+        "method": "knn",
+        "features": "color",
+        "k": 5,
+        "macro_f1_mean": 0.5590742483487586,
+        "macro_f1_std": 0.03136638710157231,
+        "fold_scores": [
+          0.5928776925742791,
+          0.5204204793028323,
+          0.560331084249259,
+          0.5862735324304648,
+          0.5354684531869578
+        ]
+      },
+      "knn_test": {
+        "n": 335,
+        "accuracy": 0.6388059701492538,
+        "macro_f1": 0.5608384208384208,
+        "confusion": [
+          [
+            78,
+            4,
+            2,
+            1,
+            1
+          ],
+          [
+            16,
+            5,
+            3,
+            5,
+            5
+          ],
+          [
+            2,
+            1,
+            24,
+            2,
+            7
+          ],
+          [
+            11,
+            4,
+            6,
+            34,
+            8
+          ],
+          [
+            17,
+            4,
+            10,
+            12,
+            73
+          ]
+        ],
+        "labels": [
+          "brown_spot",
+          "cercospora",
+          "healthy",
+          "leaf_miner",
+          "rust"
+        ],
+        "prediction_labels": [
+          "brown_spot",
+          "cercospora",
+          "healthy",
+          "leaf_miner",
+          "rust"
+        ],
+        "coverage": 0.7850746268656716,
+        "accepted_accuracy": 0.7414448669201521
+      },
+      "svm_test": {
+        "n": 335,
+        "accuracy": 0.6865671641791045,
+        "macro_f1": 0.6477744413444513,
+        "confusion": [
+          [
+            77,
+            4,
+            2,
+            1,
+            2
+          ],
+          [
+            3,
+            15,
+            4,
+            6,
+            6
+          ],
+          [
+            0,
+            0,
+            25,
+            3,
+            8
+          ],
+          [
+            2,
+            4,
+            4,
+            43,
+            10
+          ],
+          [
+            3,
+            24,
+            9,
+            10,
+            70
+          ]
+        ],
+        "labels": [
+          "brown_spot",
+          "cercospora",
+          "healthy",
+          "leaf_miner",
+          "rust"
+        ],
+        "prediction_labels": [
+          "brown_spot",
+          "cercospora",
+          "healthy",
+          "leaf_miner",
+          "rust"
+        ]
+      },
+      "test_processing_failures": [],
+      "svm_selected": {
+        "pca": "passthrough",
+        "svc__C": "1.0",
+        "svc__gamma": "0.01"
+      },
+      "svm_cv_mean": 0.6094529422987838,
+      "svm_cv_std": 0.026359261348722768,
+      "domains": {
+        "plain": {
+          "n": 335,
+          "accuracy": 0.6388059701492538,
+          "macro_f1": 0.5608384208384208,
+          "confusion": [
+            [
+              78,
+              4,
+              2,
+              1,
+              1
+            ],
+            [
+              16,
+              5,
+              3,
+              5,
+              5
+            ],
+            [
+              2,
+              1,
+              24,
+              2,
+              7
+            ],
+            [
+              11,
+              4,
+              6,
+              34,
+              8
+            ],
+            [
+              17,
+              4,
+              10,
+              12,
+              73
+            ]
+          ],
+          "labels": [
+            "brown_spot",
+            "cercospora",
+            "healthy",
+            "leaf_miner",
+            "rust"
+          ],
+          "prediction_labels": [
+            "brown_spot",
+            "cercospora",
+            "healthy",
+            "leaf_miner",
+            "rust"
+          ]
+        },
+        "field": {
+          "n": 0,
+          "status": "pending"
+        }
+      },
+      "brightness_stress": [
+        {
+          "transform": "brightness_0.6",
+          "factor": 0.6,
+          "end_to_end_accuracy": 0.4388059701492537,
+          "segmentation_failures": 0,
+          "total": 335,
+          "successful_only_metrics": {
+            "n": 335,
+            "accuracy": 0.4388059701492537,
+            "macro_f1": 0.3814841707643756,
+            "confusion": [
+              [
+                52,
+                4,
+                3,
+                7,
+                20
+              ],
+              [
+                9,
+                3,
+                9,
+                6,
+                7
+              ],
+              [
+                0,
+                2,
+                21,
+                2,
+                11
+              ],
+              [
+                8,
+                10,
+                15,
+                18,
+                12
+              ],
+              [
+                8,
+                8,
+                30,
+                17,
+                53
+              ]
+            ],
+            "labels": [
+              "brown_spot",
+              "cercospora",
+              "healthy",
+              "leaf_miner",
+              "rust"
+            ],
+            "prediction_labels": [
+              "brown_spot",
+              "cercospora",
+              "healthy",
+              "leaf_miner",
+              "rust"
+            ]
+          }
+        },
+        {
+          "transform": "brightness_1.4",
+          "factor": 1.4,
+          "end_to_end_accuracy": 0.42388059701492536,
+          "segmentation_failures": 0,
+          "total": 335,
+          "successful_only_metrics": {
+            "n": 335,
+            "accuracy": 0.42388059701492536,
+            "macro_f1": 0.3222487166375197,
+            "confusion": [
+              [
+                75,
+                0,
+                0,
+                10,
+                1
+              ],
+              [
+                18,
+                3,
+                1,
+                9,
+                3
+              ],
+              [
+                19,
+                2,
+                3,
+                1,
+                11
+              ],
+              [
+                31,
+                0,
+                4,
+                21,
+                7
+              ],
+              [
+                62,
+                2,
+                4,
+                8,
+                40
+              ]
+            ],
+            "labels": [
+              "brown_spot",
+              "cercospora",
+              "healthy",
+              "leaf_miner",
+              "rust"
+            ],
+            "prediction_labels": [
+              "brown_spot",
+              "cercospora",
+              "healthy",
+              "leaf_miner",
+              "rust"
+            ]
+          }
+        }
+      ],
+      "robustness_stress": [
+        {
+          "transform": "brightness_0.6",
+          "factor": 0.6,
+          "end_to_end_accuracy": 0.4388059701492537,
+          "segmentation_failures": 0,
+          "total": 335,
+          "successful_only_metrics": {
+            "n": 335,
+            "accuracy": 0.4388059701492537,
+            "macro_f1": 0.3814841707643756,
+            "confusion": [
+              [
+                52,
+                4,
+                3,
+                7,
+                20
+              ],
+              [
+                9,
+                3,
+                9,
+                6,
+                7
+              ],
+              [
+                0,
+                2,
+                21,
+                2,
+                11
+              ],
+              [
+                8,
+                10,
+                15,
+                18,
+                12
+              ],
+              [
+                8,
+                8,
+                30,
+                17,
+                53
+              ]
+            ],
+            "labels": [
+              "brown_spot",
+              "cercospora",
+              "healthy",
+              "leaf_miner",
+              "rust"
+            ],
+            "prediction_labels": [
+              "brown_spot",
+              "cercospora",
+              "healthy",
+              "leaf_miner",
+              "rust"
+            ]
+          }
+        },
+        {
+          "transform": "brightness_1.4",
+          "factor": 1.4,
+          "end_to_end_accuracy": 0.42388059701492536,
+          "segmentation_failures": 0,
+          "total": 335,
+          "successful_only_metrics": {
+            "n": 335,
+            "accuracy": 0.42388059701492536,
+            "macro_f1": 0.3222487166375197,
+            "confusion": [
+              [
+                75,
+                0,
+                0,
+                10,
+                1
+              ],
+              [
+                18,
+                3,
+                1,
+                9,
+                3
+              ],
+              [
+                19,
+                2,
+                3,
+                1,
+                11
+              ],
+              [
+                31,
+                0,
+                4,
+                21,
+                7
+              ],
+              [
+                62,
+                2,
+                4,
+                8,
+                40
+              ]
+            ],
+            "labels": [
+              "brown_spot",
+              "cercospora",
+              "healthy",
+              "leaf_miner",
+              "rust"
+            ],
+            "prediction_labels": [
+              "brown_spot",
+              "cercospora",
+              "healthy",
+              "leaf_miner",
+              "rust"
+            ]
+          }
+        },
+        {
+          "transform": "blur_sigma_1",
+          "factor": null,
+          "end_to_end_accuracy": 0.5761194029850746,
+          "segmentation_failures": 0,
+          "total": 335,
+          "successful_only_metrics": {
+            "n": 335,
+            "accuracy": 0.5761194029850746,
+            "macro_f1": 0.48992732719519366,
+            "confusion": [
+              [
+                73,
+                6,
+                5,
+                1,
+                1
+              ],
+              [
+                5,
+                5,
+                7,
+                6,
+                11
+              ],
+              [
+                1,
+                2,
+                16,
+                4,
+                13
+              ],
+              [
+                4,
+                5,
+                14,
+                28,
+                12
+              ],
+              [
+                15,
+                4,
+                19,
+                7,
+                71
+              ]
+            ],
+            "labels": [
+              "brown_spot",
+              "cercospora",
+              "healthy",
+              "leaf_miner",
+              "rust"
+            ],
+            "prediction_labels": [
+              "brown_spot",
+              "cercospora",
+              "healthy",
+              "leaf_miner",
+              "rust"
+            ]
+          }
+        },
+        {
+          "transform": "blur_sigma_2",
+          "factor": null,
+          "end_to_end_accuracy": 0.42388059701492536,
+          "segmentation_failures": 0,
+          "total": 335,
+          "successful_only_metrics": {
+            "n": 335,
+            "accuracy": 0.42388059701492536,
+            "macro_f1": 0.365024008216876,
+            "confusion": [
+              [
+                43,
+                9,
+                10,
+                7,
+                17
+              ],
+              [
+                4,
+                3,
+                9,
+                4,
+                14
+              ],
+              [
+                0,
+                2,
+                14,
+                6,
+                14
+              ],
+              [
+                4,
+                3,
+                10,
+                24,
+                22
+              ],
+              [
+                23,
+                2,
+                20,
+                13,
+                58
+              ]
+            ],
+            "labels": [
+              "brown_spot",
+              "cercospora",
+              "healthy",
+              "leaf_miner",
+              "rust"
+            ],
+            "prediction_labels": [
+              "brown_spot",
+              "cercospora",
+              "healthy",
+              "leaf_miner",
+              "rust"
+            ]
+          }
+        },
+        {
+          "transform": "rotate_90",
+          "factor": null,
+          "end_to_end_accuracy": 0.6447761194029851,
+          "segmentation_failures": 0,
+          "total": 335,
+          "successful_only_metrics": {
+            "n": 335,
+            "accuracy": 0.6447761194029851,
+            "macro_f1": 0.5633093527188395,
+            "confusion": [
+              [
+                77,
+                4,
+                2,
+                1,
+                2
+              ],
+              [
+                13,
+                5,
+                4,
+                5,
+                7
+              ],
+              [
+                2,
+                1,
+                23,
+                3,
+                7
+              ],
+              [
+                11,
+                3,
+                7,
+                35,
+                7
+              ],
+              [
+                16,
+                6,
+                10,
+                8,
+                76
+              ]
+            ],
+            "labels": [
+              "brown_spot",
+              "cercospora",
+              "healthy",
+              "leaf_miner",
+              "rust"
+            ],
+            "prediction_labels": [
+              "brown_spot",
+              "cercospora",
+              "healthy",
+              "leaf_miner",
+              "rust"
+            ]
+          }
+        },
+        {
+          "transform": "rotate_180",
+          "factor": null,
+          "end_to_end_accuracy": 0.6447761194029851,
+          "segmentation_failures": 0,
+          "total": 335,
+          "successful_only_metrics": {
+            "n": 335,
+            "accuracy": 0.6447761194029851,
+            "macro_f1": 0.5680249920220003,
+            "confusion": [
+              [
+                79,
+                3,
+                2,
+                1,
+                1
+              ],
+              [
+                15,
+                6,
+                2,
+                5,
+                6
+              ],
+              [
+                1,
+                1,
+                24,
+                3,
+                7
+              ],
+              [
+                9,
+                5,
+                8,
+                32,
+                9
+              ],
+              [
+                19,
+                4,
+                10,
+                8,
+                75
+              ]
+            ],
+            "labels": [
+              "brown_spot",
+              "cercospora",
+              "healthy",
+              "leaf_miner",
+              "rust"
+            ],
+            "prediction_labels": [
+              "brown_spot",
+              "cercospora",
+              "healthy",
+              "leaf_miner",
+              "rust"
+            ]
+          }
+        },
+        {
+          "transform": "rotate_15",
+          "factor": null,
+          "end_to_end_accuracy": 0.6179104477611941,
+          "segmentation_failures": 0,
+          "total": 335,
+          "successful_only_metrics": {
+            "n": 335,
+            "accuracy": 0.6179104477611941,
+            "macro_f1": 0.5200576615554203,
+            "confusion": [
+              [
+                79,
+                3,
+                2,
+                0,
+                2
+              ],
+              [
+                15,
+                6,
+                7,
+                4,
+                2
+              ],
+              [
+                4,
+                2,
+                13,
+                8,
+                9
+              ],
+              [
+                7,
+                5,
+                7,
+                33,
+                11
+              ],
+              [
+                18,
+                7,
+                8,
+                7,
+                76
+              ]
+            ],
+            "labels": [
+              "brown_spot",
+              "cercospora",
+              "healthy",
+              "leaf_miner",
+              "rust"
+            ],
+            "prediction_labels": [
+              "brown_spot",
+              "cercospora",
+              "healthy",
+              "leaf_miner",
+              "rust"
+            ]
+          }
+        }
+      ],
+      "processing_time": {
+        "mean_ms": 326.9698953801312,
+        "std_ms": 69.6523483590125
+      },
+      "preprocessing_cv": [
+        {
+          "variant": "without_preprocessing",
+          "macro_f1_mean": 0.5325199090583421,
+          "macro_f1_std": 0.03760489226544228,
+          "fold_scores": [
+            0.48067540735126946,
+            0.5675857119707388,
+            0.5587574690150032,
+            0.5502170722703905,
+            0.5053638846843085
+          ]
+        },
+        {
+          "variant": "with_preprocessing",
+          "macro_f1_mean": 0.5111480828822099,
+          "macro_f1_std": 0.025538887617530814,
+          "fold_scores": [
+            0.5006668109573056,
+            0.5533458593306864,
+            0.5092037922644517,
+            0.5079122355438145,
+            0.4846117163147917
+          ]
+        },
+        {
+          "variant": "lab_rule_baseline",
+          "macro_f1_mean": 0.3909668156031362,
+          "macro_f1_std": 0.01090727489192846,
+          "fold_scores": [
+            0.3909356880371373,
+            0.3825757575757576,
+            0.4023801038570268,
+            0.3778366765664135,
+            0.401105851979346
+          ]
+        }
+      ]
+    },
     "rice": {
       "n_train": 90,
       "n_test": 30,
@@ -523,8 +1346,8 @@
         }
       ],
       "processing_time": {
-        "mean_ms": 540.0554683333212,
-        "std_ms": 156.96981891656898
+        "mean_ms": 220.19838666674332,
+        "std_ms": 65.35846125542572
       },
       "preprocessing_cv": [
         {
