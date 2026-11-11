@@ -24,7 +24,7 @@ from sklearn.model_selection import GridSearchCV
 from scripts.verify_algorithms import verify
 from src.data import read_manifest
 from src.evaluation import classification, overlap
-from src.model import KNN
+from src.model import KNN, KernelRidge
 from src.pipeline import Config, load_rgb, process
 from src.features import FEATURE_DIM, FEATURE_GROUPS, FEATURE_NAMES, FEATURE_SCHEMA
 from scripts.reference_methods import grabcut_reference
@@ -94,8 +94,9 @@ def main():
     outdir = Path(args.out)
     outdir.mkdir(parents=True, exist_ok=True)
     old_metrics = outdir/'metrics.json'
-    if old_metrics.exists() and not json.loads(old_metrics.read_text(encoding='utf-8')).get('schema'):
-        archive = outdir/'baseline_v1'
+    old_schema = json.loads(old_metrics.read_text(encoding='utf-8')).get('schema') if old_metrics.exists() else FEATURE_SCHEMA
+    if old_schema != FEATURE_SCHEMA:
+        archive = outdir/('baseline_v1' if not old_schema else 'baseline_'+old_schema)
         archive.mkdir(exist_ok=True)
         for name in ['metrics.json', 'cross_validation.json', 'verification.json', 'predictions.csv']:
             if (outdir/name).exists() and not (archive/name).exists():
@@ -158,20 +159,34 @@ def main():
             raise ValueError('Some CV training fold lacks a class; collect more independent groups')
         # Use training CV only for all hyperparameter and feature selection.
         cvrows = []
-        for name, indices in FEATURE_GROUPS.items():
-            for k in [1, 3, 5, 7]:
+        # Plain k-NN on every group; LDA + k-NN (the improvement) on groups holding leaf features.
+        # and RBF kernel ridge on the same groups. All are NumPy implementations in src/.
+        grid = [dict(method='knn', features=name, k=k, lda=None) for name in FEATURE_GROUPS for k in [1, 3, 5, 7]]
+        grid += [dict(method='lda+knn', features=name, k=k, lda=lda)
+                 for name in ['leaf', 'all'] for lda in [.03, .1, .3] for k in [1, 5, 11, 21]]
+        grid += [dict(method='kernel_ridge', features=name, k=5, lda=None, gamma=gamma, alpha=alpha)
+                 for name in ['leaf', 'all'] for gamma in [.1, .3, 1.] for alpha in [.01, .1, 1.]]
+
+        def build(spec):
+            """Unfitted NumPy classifier for one grid row."""
+            indices = FEATURE_GROUPS[spec['features']]
+            if spec['method'] == 'kernel_ridge':
+                return KernelRidge(spec['alpha'], spec['gamma'], indices, spec['k'])
+            return KNN(spec['k'], indices, spec['lda'])
+
+        for spec in grid:
+            if True:
                 scores = []
                 for a, b in folds:
-                    model = KNN(k, indices).fit(x[train][a], y[train][a])
+                    model = build(spec).fit(x[train][a], y[train][a])
                     scores.append(classification(y[train][b], model.predict(x[train][b]), labels)['macro_f1'])
-                row = dict(crop=crop, method='knn', features=name, k=k,
+                row = dict(crop=crop, **spec,
                            macro_f1_mean=float(np.mean(scores)),
                            macro_f1_std=float(np.std(scores, ddof=1)),
                            fold_scores=scores)
                 cvrows.append(row)
         best = max(cvrows, key=lambda r: r['macro_f1_mean'])
-        indices = FEATURE_GROUPS[best['features']]
-        model = KNN(best['k'], indices).fit(x[train], y[train])
+        model = build(best).fit(x[train], y[train])
         model.save(Path('models') / f'{crop}_knn.npz', config, crop,
                    sample_ids=[r['id'] for r in subset if r['split'] == 'train'])
         pred = model.predict(x[test]).astype(object)
@@ -252,7 +267,7 @@ def main():
                                       for r in subset if r['split'] == 'train'])
             scores = []
             for a, b in folds:
-                candidate = KNN(3).fit(variant_x[a], y[train][a])
+                candidate = KNN(3, FEATURE_GROUPS['lesion']).fit(variant_x[a], y[train][a])
                 scores.append(classification(y[train][b], candidate.predict(variant_x[b]), labels)['macro_f1'])
             preprocessing_cv.append(dict(variant=variant, macro_f1_mean=float(np.mean(scores)),
                                          macro_f1_std=float(np.std(scores, ddof=1)), fold_scores=scores))

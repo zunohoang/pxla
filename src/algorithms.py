@@ -323,3 +323,45 @@ def region_shape(mask):
     ecc = np.sqrt(1-eigen[0]/eigen[1]) if eigen[1] > 0 else 0.
     solidity = len(coords)/max(convex_hull_mask(mask).sum(), 1)
     return float(ecc), float(solidity)
+
+
+def lda_projection(x, y, shrinkage=.1):
+    """Fisher discriminant axes with a shrunk within-class covariance.
+
+    Sw = sum_c p_c Cov_c is shrunk to (1-s) Sw + s (tr Sw / d) I, then the
+    generalized problem Sb v = lambda Sw v is solved by whitening Sw. Returns a
+    d x (C-1) matrix whose columns satisfy v' Sw v = 1, largest lambda first.
+    """
+    x, y = np.asarray(x, float), np.asarray(y)
+    classes = np.unique(y)
+    if x.ndim != 2 or len(classes) < 2 or not 0 < shrinkage <= 1:
+        raise ValueError('NxD input, >=2 classes and shrinkage in (0, 1] required')
+    mean = x.mean(0)
+    within = np.zeros((x.shape[1], x.shape[1]))
+    between = np.zeros_like(within)
+    for label in classes:
+        rows = x[y == label]
+        centered = rows-rows.mean(0)
+        within += centered.T@centered
+        between += len(rows)*np.outer(rows.mean(0)-mean, rows.mean(0)-mean)
+    within, between = within/len(x), between/len(x)
+    within = (1-shrinkage)*within+shrinkage*np.trace(within)/len(within)*np.eye(len(within))
+    values, vectors = np.linalg.eigh(within)
+    whitening = vectors/np.sqrt(values)
+    _, axes = np.linalg.eigh(whitening.T@between@whitening)
+    return whitening@axes[:, ::-1][:, :len(classes)-1]
+
+
+def rbf_kernel(a, b, gamma):
+    """Gaussian kernel matrix exp(-gamma ||a_i - b_j||^2) between row sets."""
+    a, b = np.asarray(a, float), np.asarray(b, float)
+    squared = (a**2).sum(1)[:, None]+(b**2).sum(1)[None]-2*a@b.T
+    return np.exp(-gamma*np.maximum(squared, 0))
+
+
+def kernel_ridge_fit(kernel, targets, alpha):
+    """Dual ridge coefficients: solve (K + alpha I) W = T for a symmetric kernel K."""
+    kernel = np.asarray(kernel, float)
+    if kernel.ndim != 2 or kernel.shape[0] != kernel.shape[1] or alpha <= 0:
+        raise ValueError('Square kernel matrix and positive alpha required')
+    return np.linalg.solve(kernel+alpha*np.eye(len(kernel)), np.asarray(targets, float))

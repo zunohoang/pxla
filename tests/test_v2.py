@@ -12,7 +12,7 @@ from src.algorithms import (clahe, distance_transform, glcm, gray_world,
 from src.advice import RULES, recommendation, severity
 from src.data import FIELDS, merge_manifest
 from src.features import FEATURE_DIM, FEATURE_GROUPS, features
-from src.model import KNN
+from src.model import KNN, KernelRidge
 from src.pipeline import Config, process
 from run_experiments import evaluate_masks
 
@@ -41,7 +41,9 @@ def test_uniform_leaf_no_forced_lesion_and_border_warning():
     out = process(image, Config(preprocessing=False))
     assert any('chạm biên' in w for w in out['warnings'])
     assert out['ratio'] == 0
-    np.testing.assert_array_equal(out['features'], np.zeros(FEATURE_DIM))
+    lesion_block = out['features'][FEATURE_GROUPS['lesion']]
+    np.testing.assert_array_equal(lesion_block, np.zeros(len(lesion_block)))
+    assert out['features'][FEATURE_GROUPS['leaf']].any()
 
 
 def test_roi_ignores_background_and_rotation_shape():
@@ -54,7 +56,11 @@ def test_roi_ignores_background_and_rotation_shape():
     a = features(image, leaf, lesion)
     changed = image.copy()
     changed[~lesion] = [250, 250, 250]
-    np.testing.assert_allclose(a, features(changed, leaf, lesion))
+    block = FEATURE_GROUPS['lesion']
+    np.testing.assert_allclose(a[block], features(changed, leaf, lesion)[block])
+    outside = image.copy()
+    outside[~leaf] = [250, 250, 250]
+    np.testing.assert_allclose(a, features(outside, leaf, lesion))
     b = features(np.rot90(image), np.rot90(leaf), np.rot90(lesion))
     np.testing.assert_allclose(a[FEATURE_GROUPS['shape']], b[FEATURE_GROUPS['shape']], atol=1e-10)
 
@@ -128,3 +134,40 @@ def test_lbp_radius_two_hand_example():
     gray[3,5] = 6
     gray[5,3] = 5
     assert lbp8(gray,2)[3,3] == 65
+
+
+def test_lda_knn_separates_and_roundtrips(tmp_path):
+    rng = np.random.default_rng(3)
+    x = rng.normal(0, 1, (60, FEATURE_DIM))
+    y = np.repeat(['a', 'b', 'c'], 20)
+    x[20:40, 0] += 6
+    x[40:, 1] += 6
+    model = KNN(3, [0, 1, 2, 3], lda=.1).fit(x, y)
+    assert model.x.shape == (60, 2)
+    assert (model.predict(x) == y).mean() > .95
+    fresh = rng.normal(0, 1, (30, FEATURE_DIM))
+    fresh[10:20, 0] += 6
+    fresh[20:, 1] += 6
+    accepted = [not d['rejected'] for d in model.predict_details(fresh)]
+    assert np.mean(accepted) > .7  # the gate must not reject ordinary unseen rows
+    path = tmp_path/'lda.npz'
+    model.save(path)
+    restored, _, _ = KNN.load(path)
+    assert restored.predict(x).tolist() == model.predict(x).tolist()
+    assert restored.explain(x[0])['distance_terms'][0]['feature'].startswith('lda_axis_')
+
+
+def test_kernel_ridge_separates_and_roundtrips(tmp_path):
+    rng = np.random.default_rng(5)
+    x = rng.normal(0, 1, (60, FEATURE_DIM))
+    y = np.repeat(['a', 'b', 'c'], 20)
+    x[20:40, 0] += 6
+    x[40:, 1] += 6
+    model = KernelRidge(.1, 1., [0, 1, 2, 3]).fit(x, y)
+    assert (model.predict(x) == y).mean() > .95
+    path = tmp_path/'ridge.npz'
+    model.save(path)
+    restored, _, _ = KNN.load(path)
+    assert isinstance(restored, KernelRidge)
+    np.testing.assert_allclose(restored.decision(x), model.decision(x))
+    assert restored.explain(x[0])['neighbors'][0]['label'] == 'a'

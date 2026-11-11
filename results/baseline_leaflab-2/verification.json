@@ -1,0 +1,156 @@
+[
+  {
+    "name": "HSV",
+    "max_abs": 1.1368683772161603e-13,
+    "mse": 1.3048603803472725e-28,
+    "tolerance": 1e-10,
+    "passed": true
+  },
+  {
+    "name": "Lab D65",
+    "max_abs": 0.004704456583269234,
+    "mse": 3.2210195462824115e-06,
+    "tolerance": 0.03,
+    "passed": true
+  },
+  {
+    "name": "erode",
+    "max_abs": 0.0,
+    "mse": 0.0,
+    "tolerance": 0,
+    "passed": true
+  },
+  {
+    "name": "dilate",
+    "max_abs": 0.0,
+    "mse": 0.0,
+    "tolerance": 0,
+    "passed": true
+  },
+  {
+    "name": "GLCM",
+    "max_abs": 0.0,
+    "mse": 0.0,
+    "tolerance": 1e-14,
+    "passed": true
+  },
+  {
+    "name": "GLCM properties",
+    "max_abs": 1.3877787807814457e-17,
+    "mse": 3.209883240645393e-35,
+    "tolerance": 1e-10,
+    "passed": true
+  },
+  {
+    "name": "K-means centers same init",
+    "max_abs": 1.3322676295501878e-15,
+    "mse": 5.811794533742295e-31,
+    "tolerance": 1e-10,
+    "passed": true
+  },
+  {
+    "name": "K-means SSE",
+    "max_abs": 2.220446049250313e-16,
+    "mse": 4.930380657631324e-32,
+    "tolerance": 1e-10,
+    "passed": true
+  },
+  {
+    "name": "k-NN predictions",
+    "max_abs": 0.0,
+    "mse": 0.0,
+    "tolerance": 0,
+    "passed": true
+  },
+  {
+    "name": "LBP hand example",
+    "max_abs": 0.0,
+    "mse": 0.0,
+    "tolerance": 0,
+    "passed": true
+  },
+  {
+    "name": "CLAHE OpenCV same 8x8 tiles clip2",
+    "max_abs": 0.0,
+    "mse": 0.0,
+    "tolerance": 1.0,
+    "passed": true
+  },
+  {
+    "name": "CLAHE padded rectangle",
+    "max_abs": 1.0,
+    "mse": 0.0017857142857142857,
+    "tolerance": 1.0,
+    "passed": true
+  },
+  {
+    "name": "Lab inverse roundtrip",
+    "max_abs": 0.0,
+    "mse": 0.0,
+    "tolerance": 1.0,
+    "passed": true
+  },
+  {
+    "name": "Median RGB reflect",
+    "max_abs": 0.0,
+    "mse": 0.0,
+    "tolerance": 0.0,
+    "passed": true
+  },
+  {
+    "name": "Gray world hand",
+    "max_abs": 0.0,
+    "mse": 0.0,
+    "tolerance": 0.0,
+    "passed": true
+  },
+  {
+    "name": "GLCM signed 1,0",
+    "max_abs": 0.0,
+    "mse": 0.0,
+    "tolerance": 1e-14,
+    "passed": true
+  },
+  {
+    "name": "GLCM signed -1,1",
+    "max_abs": 0.0,
+    "mse": 0.0,
+    "tolerance": 1e-14,
+    "passed": true
+  },
+  {
+    "name": "Region eccentricity solidity",
+    "max_abs": 1.1102230246251565e-16,
+    "mse": 6.162975822039155e-33,
+    "tolerance": 1e-10,
+    "passed": true
+  },
+  {
+    "name": "Euclidean distance transform",
+    "max_abs": 0.0,
+    "mse": 0.0,
+    "tolerance": 1e-10,
+    "passed": true
+  },
+  {
+    "name": "Fill holes",
+    "max_abs": 0.0,
+    "mse": 0.0,
+    "tolerance": 0,
+    "passed": true
+  },
+  {
+    "name": "Connected components count",
+    "max_abs": 0.0,
+    "mse": 0.0,
+    "tolerance": 0,
+    "passed": true
+  },
+  {
+    "name": "Otsu uint8",
+    "max_abs": 0.0,
+    "mse": 0.0,
+    "tolerance": 0,
+    "passed": true
+  }
+]

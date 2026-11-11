@@ -59,8 +59,12 @@ def main():
         source = st.camera_input('Chụp một lá')
         st.caption('Trình duyệt cần cấp quyền camera. Điện thoại truy cập camera qua HTTPS hoặc localhost.')
     else:
-        examples = sorted(Path(f'data/raw/{crop}').glob('*/*'))
-        examples = [p for p in examples if p.suffix.lower() in ['.jpg', '.jpeg', '.png']]
+        # data/raw is not versioned (large); data/samples holds a few test-split images for deployed demos.
+        examples = []
+        for root in [f'data/raw/{crop}', f'data/samples/{crop}']:
+            examples = sorted(p for p in Path(root).glob('*/*') if p.suffix.lower() in ['.jpg', '.jpeg', '.png'])
+            if examples:
+                break
         if examples:
             source = st.selectbox('Chọn ảnh', examples, format_func=lambda p: p.parent.name + ' / ' + p.name)
         else:
@@ -102,7 +106,7 @@ def main():
         st.image(result['overlay'], width=600)
         st.download_button('Tải mặt nạ vết nghi bệnh', png_bytes(result['lesion'].astype('uint8')*255), 'lesion_mask.png', 'image/png')
     with tabs[3]:
-        st.write(f'RGB gốc → ExG/HSV → mask lá. Ảnh chuẩn hóa + mask lá → K-means a*b* → vùng tổn thương → {FEATURE_DIM} đặc trưng ROI và hình dạng → k-NN.')
+        st.write(f'RGB gốc → ExG/HSV → mask lá. Ảnh chuẩn hóa + mask lá → K-means a*b* → vùng tổn thương → {FEATURE_DIM} đặc trưng (vùng tổn thương và toàn lá) → chuẩn hóa, LDA nếu mô hình có dùng → k-NN.')
         st.dataframe(result['centers'], column_config={0: 'L*', 1: 'a*', 2: 'b*'})
         st.json(config.to_dict())
         if model is not None:

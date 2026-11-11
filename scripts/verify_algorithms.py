@@ -13,7 +13,7 @@ from skimage.feature import graycomatrix, graycoprops
 from src.algorithms import (glcm, glcm_properties, kmeans, lbp8, morphology,
                             rgb_to_hsv, rgb_to_lab)
 from src.model import KNN
-from src.algorithms import (clahe, gray_world, lab_to_rgb, region_shape,
+from src.algorithms import (kernel_ridge_fit, rbf_kernel, lda_projection, clahe, gray_world, lab_to_rgb, region_shape,
                             distance_transform, otsu, components, fill_holes, median_filter)
 from scipy.ndimage import distance_transform_edt, binary_fill_holes, label
 from skimage.measure import regionprops
@@ -97,6 +97,34 @@ def verify():
     record('Connected components count', [len(components(shape)[1])-1], [label(shape)[1]], 0)
     from skimage.filters import threshold_otsu
     record('Otsu uint8', [otsu(light)], [threshold_otsu(light)], 0)
+    from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+    data = np.r_[rng.normal(0, 1, (30, 6)), rng.normal(1.5, 1, (30, 6)), rng.normal([3, 0, 0, 0, 0, 0], 1, (30, 6))]
+    classes = np.repeat(['a', 'b', 'c'], 30)
+    # Axes are defined up to sign and translation, so compare pairwise distances.
+    pair = lambda z: np.sqrt(((z[:, None]-z[None])**2).sum(-1))
+    reference = LinearDiscriminantAnalysis(solver='eigen').fit(data, classes).transform(data)
+    record('LDA no shrinkage vs sklearn eigen', pair(data@lda_projection(data, classes, 1e-12)),
+           pair(reference), 1e-6)
+    # sklearn's eigen solver also shrinks the total scatter, which is not the
+    # textbook form used here; so the shrunk case is checked against SciPy's
+    # generalized eigensolver fed with scikit-learn covariance estimates.
+    from scipy.linalg import eigh
+    from sklearn.covariance import empirical_covariance, shrunk_covariance
+    within = sum(np.mean(classes == c)*shrunk_covariance(empirical_covariance(data[classes == c]), .1)
+                 for c in np.unique(classes))
+    between = empirical_covariance(data)-sum(np.mean(classes == c)*empirical_covariance(data[classes == c])
+                                             for c in np.unique(classes))
+    _, vectors = eigh(between, within)
+    record('LDA shrinkage 0.1 vs SciPy generalized eigh', pair(data@lda_projection(data, classes, .1)),
+           pair(data@vectors[:, ::-1][:, :2]), 1e-8)
+    from sklearn.kernel_ridge import KernelRidge as SkKernelRidge
+    from sklearn.metrics.pairwise import rbf_kernel as sk_rbf
+    queries = rng.normal(1, 1.5, (12, 6))
+    record('RBF kernel', rbf_kernel(queries, data, .2), sk_rbf(queries, data, gamma=.2), 1e-12)
+    targets = (classes[:, None] == np.unique(classes))*2.-1
+    reference = SkKernelRidge(alpha=.1, kernel='rbf', gamma=.2).fit(data, targets).predict(queries)
+    ours = rbf_kernel(queries, data, .2)@kernel_ridge_fit(rbf_kernel(data, data, .2), targets, .1)
+    record('Kernel ridge decision values', ours, reference, 1e-8)
     return comparisons
 
 

@@ -152,5 +152,33 @@
     "mse": 0.0,
     "tolerance": 0,
     "passed": true
+  },
+  {
+    "name": "LDA no shrinkage vs sklearn eigen",
+    "max_abs": 2.1529444893531036e-12,
+    "mse": 3.888325293186914e-25,
+    "tolerance": 1e-06,
+    "passed": true
+  },
+  {
+    "name": "LDA shrinkage 0.1 vs SciPy generalized eigh",
+    "max_abs": 6.217248937900877e-15,
+    "mse": 4.784026245266313e-30,
+    "tolerance": 1e-08,
+    "passed": true
+  },
+  {
+    "name": "RBF kernel",
+    "max_abs": 7.771561172376096e-16,
+    "mse": 4.73870242432446e-33,
+    "tolerance": 1e-12,
+    "passed": true
+  },
+  {
+    "name": "Kernel ridge decision values",
+    "max_abs": 1.5543122344752192e-15,
+    "mse": 3.92488807612753e-31,
+    "tolerance": 1e-08,
+    "passed": true
   }
 ]
