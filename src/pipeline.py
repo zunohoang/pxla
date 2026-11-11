@@ -167,7 +167,7 @@ def process(rgb, config=Config(), leaf_override=None):
         flags.append('Ảnh ít tương phản; nên chụp lại.')
     overlay = rgb.copy()
     overlay[lesion] = (.5*overlay[lesion]+.5*np.array([255, 40, 40])).astype(np.uint8)
-    return dict(leaf=leaf, lesion=lesion, features=features(processed, leaf, lesion, valid),
+    return dict(leaf=leaf, lesion=lesion, features=features(processed, leaf, lesion, valid, rgb),
                 ratio=ratio, severity=level, warnings=flags, centers=centers,
                 overlay=overlay, processed=processed, glare=glare,
                 glare_fraction=glare_fraction)
