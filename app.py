@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 
 import numpy as np
+import pandas as pd
 from PIL import Image
 import streamlit as st
 
@@ -107,7 +108,7 @@ def main():
         st.download_button('Tải mặt nạ vết nghi bệnh', png_bytes(result['lesion'].astype('uint8')*255), 'lesion_mask.png', 'image/png')
     with tabs[3]:
         st.write(f'RGB gốc → ExG/HSV → mask lá. Ảnh chuẩn hóa + mask lá → K-means a*b* → vùng tổn thương → {FEATURE_DIM} đặc trưng (vùng tổn thương và toàn lá) → chuẩn hóa, LDA nếu mô hình có dùng → k-NN.')
-        st.dataframe(result['centers'], column_config={0: 'L*', 1: 'a*', 2: 'b*'})
+        st.dataframe(pd.DataFrame(result['centers'], columns=['L*', 'a*', 'b*']))
         st.json(config.to_dict())
         if model is not None:
             explanation = model.explain(result['features'])
