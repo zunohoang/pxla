@@ -1,0 +1,492 @@
+{
+  "site": "angiang",
+  "config": {
+    "good_reliability": [
+      0,
+      1
+    ],
+    "min_valid_frac": 0.3,
+    "min_ref": 3,
+    "sigma_floor": 0.03,
+    "z_threshold": -1.5,
+    "min_area_px": 4,
+    "rice_min_area_px": 20,
+    "min_coverage": 0.3,
+    "lags": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "knn_k": 7,
+    "knn_lags": [
+      1,
+      2
+    ],
+    "high_quantile": 0.75,
+    "outbreak_years": [
+      2006,
+      2007
+    ],
+    "weather_vars": [
+      "RH2M",
+      "T2M",
+      "PRECTOTCORR",
+      "WET_DAYS"
+    ]
+  },
+  "period": [
+    "2000-02-18",
+    "2010-12-19"
+  ],
+  "n_composites": 250,
+  "grid": [
+    161,
+    161
+  ],
+  "pixel_area_ha": 5.366466832413872,
+  "rice_mask": {
+    "pixels": 16407,
+    "area_km2": 880.476213194144,
+    "fraction_of_box": 0.6329616912927742,
+    "amplitude_threshold": 0.5101729411764706
+  },
+  "composites_usable": 158,
+  "composites_dropped_low_coverage": 92,
+  "per_year": [
+    {
+      "year": 2000,
+      "composites": 20,
+      "usable": 10,
+      "mean_stressed_fraction": 0.20199926588478304,
+      "max_stressed_fraction": 0.4176879761510434,
+      "mean_clear_coverage": 0.3399707441945511,
+      "severity_counts": {
+        "none": 1,
+        "light": 3,
+        "moderate": 0,
+        "severe": 6,
+        "no_data": 10
+      }
+    },
+    {
+      "year": 2001,
+      "composites": 23,
+      "usable": 15,
+      "mean_stressed_fraction": 0.19235773967394174,
+      "max_stressed_fraction": 0.5057065973833164,
+      "mean_clear_coverage": 0.5355137388336368,
+      "severity_counts": {
+        "none": 0,
+        "light": 3,
+        "moderate": 6,
+        "severe": 6,
+        "no_data": 8
+      }
+    },
+    {
+      "year": 2002,
+      "composites": 23,
+      "usable": 17,
+      "mean_stressed_fraction": 0.18986188715604446,
+      "max_stressed_fraction": 0.6871203288948886,
+      "mean_clear_coverage": 0.5552905573177938,
+      "severity_counts": {
+        "none": 1,
+        "light": 2,
+        "moderate": 6,
+        "severe": 8,
+        "no_data": 6
+      }
+    },
+    {
+      "year": 2003,
+      "composites": 23,
+      "usable": 17,
+      "mean_stressed_fraction": 0.14303785876314198,
+      "max_stressed_fraction": 0.5063210453627961,
+      "mean_clear_coverage": 0.6002978580192441,
+      "severity_counts": {
+        "none": 1,
+        "light": 4,
+        "moderate": 8,
+        "severe": 4,
+        "no_data": 6
+      }
+    },
+    {
+      "year": 2004,
+      "composites": 23,
+      "usable": 15,
+      "mean_stressed_fraction": 0.20538538710884824,
+      "max_stressed_fraction": 0.8031555221637866,
+      "mean_clear_coverage": 0.5203505396689113,
+      "severity_counts": {
+        "none": 1,
+        "light": 3,
+        "moderate": 6,
+        "severe": 5,
+        "no_data": 8
+      }
+    },
+    {
+      "year": 2005,
+      "composites": 23,
+      "usable": 15,
+      "mean_stressed_fraction": 0.14322236548523506,
+      "max_stressed_fraction": 0.48278870558375636,
+      "mean_clear_coverage": 0.5200510916602404,
+      "severity_counts": {
+        "none": 0,
+        "light": 4,
+        "moderate": 6,
+        "severe": 5,
+        "no_data": 8
+      }
+    },
+    {
+      "year": 2006,
+      "composites": 23,
+      "usable": 14,
+      "mean_stressed_fraction": 0.11132481267594177,
+      "max_stressed_fraction": 0.30308076602830974,
+      "mean_clear_coverage": 0.43896163090515455,
+      "severity_counts": {
+        "none": 1,
+        "light": 3,
+        "moderate": 8,
+        "severe": 2,
+        "no_data": 9
+      }
+    },
+    {
+      "year": 2007,
+      "composites": 23,
+      "usable": 13,
+      "mean_stressed_fraction": 0.10290769907626161,
+      "max_stressed_fraction": 0.35426316692400067,
+      "mean_clear_coverage": 0.44647698092807686,
+      "severity_counts": {
+        "none": 1,
+        "light": 5,
+        "moderate": 5,
+        "severe": 2,
+        "no_data": 10
+      }
+    },
+    {
+      "year": 2008,
+      "composites": 23,
+      "usable": 13,
+      "mean_stressed_fraction": 0.1272615846761856,
+      "max_stressed_fraction": 0.4288198757763975,
+      "mean_clear_coverage": 0.47379829924131,
+      "severity_counts": {
+        "none": 1,
+        "light": 1,
+        "moderate": 9,
+        "severe": 2,
+        "no_data": 10
+      }
+    },
+    {
+      "year": 2009,
+      "composites": 23,
+      "usable": 15,
+      "mean_stressed_fraction": 0.14742052456434873,
+      "max_stressed_fraction": 0.5404703505987593,
+      "mean_clear_coverage": 0.5287112340702934,
+      "severity_counts": {
+        "none": 1,
+        "light": 5,
+        "moderate": 5,
+        "severe": 4,
+        "no_data": 8
+      }
+    },
+    {
+      "year": 2010,
+      "composites": 23,
+      "usable": 14,
+      "mean_stressed_fraction": 0.10613266931086807,
+      "max_stressed_fraction": 0.2008989084682885,
+      "mean_clear_coverage": 0.5013501660213959,
+      "severity_counts": {
+        "none": 0,
+        "light": 1,
+        "moderate": 12,
+        "severe": 1,
+        "no_data": 9
+      }
+    }
+  ],
+  "outbreak_test": {
+    "target_years": [
+      2006,
+      2007
+    ],
+    "observed": 0.10711625587610168,
+    "others_mean": 0.1618532536248219,
+    "n_sets": 55,
+    "p_one_sided": 0.9818181818181818,
+    "rank_of_target": 54,
+    "note": "Exact permutation over all same-size sets of years with data; annual value = mean stressed fraction of usable composites."
+  },
+  "correlations": [
+    {
+      "variable": "RH2M",
+      "lag_composites": 0,
+      "lag_days": 0,
+      "r": 0.023961031947535516,
+      "n": 158,
+      "p": 0.7621359223300971,
+      "n_shifts": 205,
+      "p_holm": 1.0
+    },
+    {
+      "variable": "RH2M",
+      "lag_composites": 1,
+      "lag_days": 16,
+      "r": 0.06184297843573825,
+      "n": 157,
+      "p": 0.5388349514563107,
+      "n_shifts": 205,
+      "p_holm": 1.0
+    },
+    {
+      "variable": "RH2M",
+      "lag_composites": 2,
+      "lag_days": 32,
+      "r": 0.10388013465884843,
+      "n": 156,
+      "p": 0.2669902912621359,
+      "n_shifts": 205,
+      "p_holm": 1.0
+    },
+    {
+      "variable": "RH2M",
+      "lag_composites": 3,
+      "lag_days": 48,
+      "r": 0.09698043891592278,
+      "n": 155,
+      "p": 0.2961165048543689,
+      "n_shifts": 205,
+      "p_holm": 1.0
+    },
+    {
+      "variable": "T2M",
+      "lag_composites": 0,
+      "lag_days": 0,
+      "r": -0.03679115977722979,
+      "n": 158,
+      "p": 0.6067961165048543,
+      "n_shifts": 205,
+      "p_holm": 1.0
+    },
+    {
+      "variable": "T2M",
+      "lag_composites": 1,
+      "lag_days": 16,
+      "r": -0.0827932448104987,
+      "n": 157,
+      "p": 0.3300970873786408,
+      "n_shifts": 205,
+      "p_holm": 1.0
+    },
+    {
+      "variable": "T2M",
+      "lag_composites": 2,
+      "lag_days": 32,
+      "r": -0.1267184017954513,
+      "n": 156,
+      "p": 0.07766990291262135,
+      "n_shifts": 205,
+      "p_holm": 1.0
+    },
+    {
+      "variable": "T2M",
+      "lag_composites": 3,
+      "lag_days": 48,
+      "r": -0.07679739615223485,
+      "n": 155,
+      "p": 0.34951456310679613,
+      "n_shifts": 205,
+      "p_holm": 1.0
+    },
+    {
+      "variable": "PRECTOTCORR",
+      "lag_composites": 0,
+      "lag_days": 0,
+      "r": -0.03717772409509384,
+      "n": 158,
+      "p": 0.6601941747572816,
+      "n_shifts": 205,
+      "p_holm": 1.0
+    },
+    {
+      "variable": "PRECTOTCORR",
+      "lag_composites": 1,
+      "lag_days": 16,
+      "r": -0.036726707217822466,
+      "n": 157,
+      "p": 0.6650485436893204,
+      "n_shifts": 205,
+      "p_holm": 1.0
+    },
+    {
+      "variable": "PRECTOTCORR",
+      "lag_composites": 2,
+      "lag_days": 32,
+      "r": 0.03943847626196723,
+      "n": 156,
+      "p": 0.6407766990291263,
+      "n_shifts": 205,
+      "p_holm": 1.0
+    },
+    {
+      "variable": "PRECTOTCORR",
+      "lag_composites": 3,
+      "lag_days": 48,
+      "r": 0.02132555183012168,
+      "n": 155,
+      "p": 0.8106796116504854,
+      "n_shifts": 205,
+      "p_holm": 1.0
+    },
+    {
+      "variable": "WET_DAYS",
+      "lag_composites": 0,
+      "lag_days": 0,
+      "r": -0.04694163573653583,
+      "n": 158,
+      "p": 0.5,
+      "n_shifts": 205,
+      "p_holm": 1.0
+    },
+    {
+      "variable": "WET_DAYS",
+      "lag_composites": 1,
+      "lag_days": 16,
+      "r": -0.027239894648433533,
+      "n": 157,
+      "p": 0.6990291262135923,
+      "n_shifts": 205,
+      "p_holm": 1.0
+    },
+    {
+      "variable": "WET_DAYS",
+      "lag_composites": 2,
+      "lag_days": 32,
+      "r": 0.023225871991264347,
+      "n": 156,
+      "p": 0.7427184466019418,
+      "n_shifts": 205,
+      "p_holm": 1.0
+    },
+    {
+      "variable": "WET_DAYS",
+      "lag_composites": 3,
+      "lag_days": 48,
+      "r": 0.02946359465965431,
+      "n": 155,
+      "p": 0.6456310679611651,
+      "n_shifts": 205,
+      "p_holm": 1.0
+    }
+  ],
+  "knn": {
+    "n": 156,
+    "n_high": 41,
+    "features": [
+      "RH2M_lag1",
+      "RH2M_lag2",
+      "T2M_lag1",
+      "T2M_lag2",
+      "PRECTOTCORR_lag1",
+      "PRECTOTCORR_lag2",
+      "WET_DAYS_lag1",
+      "WET_DAYS_lag2"
+    ],
+    "k": 7,
+    "balanced_accuracy": {
+      "knn_weather": 0.48525980911983035,
+      "majority": 0.5,
+      "persistence_satellite": 0.6586426299045599
+    },
+    "per_year": [
+      {
+        "year": 2000,
+        "n": 8,
+        "n_high": 6,
+        "knn_hits": 0
+      },
+      {
+        "year": 2001,
+        "n": 15,
+        "n_high": 6,
+        "knn_hits": 0
+      },
+      {
+        "year": 2002,
+        "n": 17,
+        "n_high": 8,
+        "knn_hits": 1
+      },
+      {
+        "year": 2003,
+        "n": 17,
+        "n_high": 3,
+        "knn_hits": 0
+      },
+      {
+        "year": 2004,
+        "n": 15,
+        "n_high": 5,
+        "knn_hits": 0
+      },
+      {
+        "year": 2005,
+        "n": 15,
+        "n_high": 4,
+        "knn_hits": 0
+      },
+      {
+        "year": 2006,
+        "n": 14,
+        "n_high": 1,
+        "knn_hits": 0
+      },
+      {
+        "year": 2007,
+        "n": 13,
+        "n_high": 2,
+        "knn_hits": 1
+      },
+      {
+        "year": 2008,
+        "n": 13,
+        "n_high": 2,
+        "knn_hits": 0
+      },
+      {
+        "year": 2009,
+        "n": 15,
+        "n_high": 4,
+        "knn_hits": 0
+      },
+      {
+        "year": 2010,
+        "n": 14,
+        "n_high": 0,
+        "knn_hits": 0
+      }
+    ]
+  },
+  "caveats": [
+    "No pixel-level disease ground truth exists; stress != disease.",
+    "POWER weather is one ~55 x 68 km cell: the same value for every pixel, so only temporal correlation is meaningful.",
+    "Leave-one-year-out baselines include the outbreak years in other years' references; the robust median limits but does not remove this.",
+    "Cropping calendar changed in An Giang during the 2000s (third crop behind dykes); slot anomalies can reflect calendar shifts.",
+    "The 2000 and 2001 Mekong floods fall in the record and can appear as stress."
+  ]
+}
